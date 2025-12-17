@@ -18,9 +18,36 @@ class Element:
         self.material = material
         self.section = section
         self.roll = roll_radians 
+        self.loads = []
+        self.fef_local = None
 
-    def required_dofs(self):
-        return self.DOFS_PER_NODE
+    @property
+    def ndof_element(self):
+        return len(self.NODE_DOF_INDICES) * 2
+    
+    def local_dof_map(self):
+        """
+        Returns:
+            {(node, dof_type): index_in_local_vector}
+        """
+        dof_map = {}
+        idx = 0
+        for node in (0, 1):  # 0 = i, 1 = j
+            for dof in self.NODE_DOF_INDICES:
+                dof_map[(node, dof)] = idx
+                idx += 1
+        return dof_map
+
+    # --------------------------------
+    # FIXED-END FORCES
+    # --------------------------------
+    def add_load(self, load):
+        self.loads.append(load)
+
+    def compute_fef(self):
+        self.fef_local[:] = 0.0     # test first
+        for load in self.loads:
+            self.fef_local += load.fef_local(self)
 
     # --------------------------------
     # GEOMETRY
@@ -31,7 +58,7 @@ class Element:
         dz = self.j.z - self.i.z
         return sqrt(dx*dx + dy*dy + dz*dz)
     
-    def local_axes(self):
+    def local_axes(self): # direction cosines
         dx = self.j.x - self.i.x
         dy = self.j.y - self.i.y
         dz = self.j.z - self.i.z  
@@ -76,13 +103,6 @@ class Element:
     @abstractmethod
     def local_stiffness(self):
         pass
-
-    def get_dof_indices(self):
-        dofs = []
-        for node in (self.i, self.j):
-            for idx in self.NODE_DOF_INDICES:
-                dofs.append(node.dofs[idx])
-        return dofs  
     
     # --------------------------------
     # GLOBAL STIFFNESS MATRIX
@@ -90,8 +110,14 @@ class Element:
     def global_stiffness(self):
         T = self.transformation_matrix()
         k_local = self.local_stiffness()
-        k_global = T.T @ k_local @ T
-        return k_global
+        return T.T @ k_local @ T
+
+    def get_dof_indices(self):
+        dofs = []
+        for node in (self.i, self.j):
+            for idx in self.NODE_DOF_INDICES:
+                dofs.append(node.dofs[idx])
+        return dofs  
     
     def __repr__(self):
         return (

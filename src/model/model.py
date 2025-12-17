@@ -30,7 +30,8 @@ class Model:
     def add_section(self, section):
         self.sections[section.id] = section
 
-    def collect_node_dofs(self):
+    def solve(self):
+    #def collect_node_dofs(self):
         for e in self.elements.values():
             for node in (e.i, e.j):
                 for dof in e.NODE_DOF_INDICES:
@@ -38,7 +39,7 @@ class Model:
                         node.dofs[dof] = None
                         node.restraints.setdefault(dof, False)
 
-    def assign_dofs(self):
+    #def assign_dofs(self):
         self.free_dofs = []
         self.restrained_dofs = []
 
@@ -53,7 +54,7 @@ class Model:
                 dof_counter += 1
         self.ndof = dof_counter
     
-    def assemble_stiffness(self):
+    #def assemble_stiffness(self):
         self.K_full = np.zeros((self.ndof, self.ndof))
 
         for element in self.elements.values():
@@ -66,7 +67,7 @@ class Model:
                     if dofs[i] is not None and dofs[j] is not None:
                         self.K_full[dofs[i], dofs[j]] += K[i, j]
 
-    def assemble_loads(self):
+    #def assemble_loads(self):
         self.F_full = np.zeros(self.ndof)
 
         for node in self.nodes.values():  
@@ -75,11 +76,15 @@ class Model:
                     continue
                 self.F_full[global_dof] += node.loads.get(dof_name, 0.0)
 
-    def assemble_fixed_end_forces(self):
+    #def assemble_fixed_end_forces(self):
         for element in self.elements.values():
-            fef_local = element.fef_local
+            if element.fef_local is None: # skip if truss
+                continue
+
+            element.compute_fef()
+            
             T = element.transformation_matrix()
-            fef_global = T.T @ fef_local
+            fef_global = T.T @ element.fef_local
 
             dofs = element.get_dof_indices()
             for i, global_dof in enumerate(dofs):
@@ -87,7 +92,7 @@ class Model:
                     # subtract because FEFs are reactions
                     self.F_full[global_dof] -= fef_global[i]
 
-    def solve(self):
+    #def solve(self):
         free = self.free_dofs
         K_ff = self.K_full[np.ix_(free, free)]
         F_f  = self.F_full[free]
@@ -97,7 +102,7 @@ class Model:
         self.D_full[free] = D_f
         self.reactions = self.K_full @ self.D_full - self.F_full
 
-    def store_displacements(self):
+    #def store_displacements(self):
         for node in self.nodes.values():
             for local_dof, global_dof in node.dofs.items():
                 if global_dof in self.free_dofs:
@@ -105,7 +110,7 @@ class Model:
                 else:
                     node.displacements[local_dof] = 0.0
 
-    def store_reactions(self):
+    #def store_reactions(self):
         for node in self.nodes.values():
             for local_dof, global_dof in node.dofs.items():
                 if global_dof in self.restrained_dofs:

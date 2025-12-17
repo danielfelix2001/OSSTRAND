@@ -9,11 +9,8 @@ class Truss(Element):
 
     def __init__(self, element_id, node_i, node_j, material, section):    
         super().__init__(element_id, node_i, node_j, material, section)
-        self.fef_local = np.zeros(6) # no fefs for truss
+        self.fef_local = None
 
-    # --------------------------------
-    # TRANSFORMATION MATRIX
-    # --------------------------------
     def transformation_matrix(self):
         x, _, _ = self.local_axes()
         l, m, n = x
@@ -22,10 +19,7 @@ class Truss(Element):
             [ l, m, n, 0, 0, 0],
             [ 0, 0, 0, l, m, n]
         ])
-    
-    # --------------------------------
-    # STIFFNESS MATRICES
-    # --------------------------------
+
     def local_stiffness(self):
         E = self.material.E
         A = self.section.area
@@ -35,9 +29,4 @@ class Truss(Element):
         return np.array([[ k, -k],
                          [-k,  k]])
      
-    def global_stiffness(self):
-        T = self.transformation_matrix()
-        k_local = self.local_stiffness()
-        k_global = T.T @ k_local @ T
-        return k_global
      

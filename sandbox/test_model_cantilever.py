@@ -1,20 +1,10 @@
 from src.model.nodes import Node
 from src.model.lineElements.beam import Beam
+from src.model.fixedEndForces.fefs import UDL
 from src.model.materials import SteelMaterial
 from src.model.sections import SteelSection
 from src.model.model import Model
 from src.model.dofs import DOF_NAMES, REACTION_NAMES
-import numpy as np
-
-"""
-Store nodes
-Store materials
-Store sections
-Store elements
-Assign global DOF numbers
-Assemble K and F
-Call the solver
-"""
 
 """
 Global xyz system
@@ -28,14 +18,11 @@ MODEL_1 = Model()
 n1 = Node(1, 0.0, 0.0, 0.0)
 n2 = Node(2, 5000.0, 0.0, 0.0)
 
-# Cantilever
+# Cantilever restraints
 n1.restrain(1) #y
 n1.restrain(2) #z
 n1.restrain(4) #ry
 n1.restrain(5) #rz
-
-# Loads
-n2.add_load(1, -1000.0)
 
 # --------------------------------
 # MATERIAL AND SECTION
@@ -74,8 +61,12 @@ BEAM_1 = Beam(
     roll_radians = 0.0
 )
 
-# Add UDL to element
-# BEAM_1.add_udl(qy = -1.0) # N/mm, local y
+# --------------------------------
+# LOADS
+# --------------------------------
+
+n2.add_load(1, -1000.0) # N in global Y
+BEAM_1.add_load(UDL(qy = -1.0)) # N/mm, local y
 
 # --------------------------------
 # ASSEMBLY AND SOLVING
@@ -83,16 +74,8 @@ BEAM_1 = Beam(
 MODEL_1.add_node(n1)
 MODEL_1.add_node(n2)
 MODEL_1.add_element(BEAM_1)
-MODEL_1.collect_node_dofs()
-MODEL_1.assign_dofs()
-
-MODEL_1.assemble_stiffness()
-MODEL_1.assemble_loads()
-MODEL_1.assemble_fixed_end_forces()
 
 MODEL_1.solve()
-MODEL_1.store_displacements()
-MODEL_1.store_reactions()
 
 # --------------------------------
 # RESULTS
