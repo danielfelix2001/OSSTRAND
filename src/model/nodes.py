@@ -1,22 +1,23 @@
 #src/model/nodes.py
 
 class Node:
-    def __init__(self, node_id: int, x: float, y: float, z: float = 0.0):
+    def __init__(self, node_id: 
+                 int, x: float, y: float, z: float = 0.0):
         self.id = node_id
-        self.x = x
-        self.y = y
-        self.z = z
-        self.restraints = [False, False, False, False, False, False] 
-        self.loads = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.displacements = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.reactions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.dof = [None, None, None, None, None, None]
+        self.x, self.y, self.z = x, y, z
 
-    def restrain(self, ux: bool, uy: bool, uz: bool, rx: bool, ry: bool, rz: bool):
-        self.restraints = [ux, uy, uz, rx, ry, rz]
+        self.dofs = {}
+        self.restraints = {}
+        self.loads = {}
 
-    def load(self, fx: float, fy: float, fz: float, mx: float, my: float, mz: float):
-        self.loads = [fx, fy, fz, mx, my, mz]
-    
+        self.displacements = {}
+        self.reactions = {}
+
+    def restrain(self, dof_name):
+        self.restraints[dof_name] = True
+
+    def add_load(self, dof_name: int, value: float):
+        self.loads[dof_name] = self.loads.get(dof_name, 0.0) + value
+
     def __repr__(self):
         return f"Node(id={self.id}, x={self.x}, y={self.y}, z={self.z})"

@@ -1,5 +1,5 @@
 from src.model.nodes import Node
-from src.model.lineElements.beam import Beam
+from src.model.lineElements.truss import Truss
 from src.model.materials import SteelMaterial
 from src.model.sections import SteelSection
 from src.model.model import Model
@@ -29,13 +29,12 @@ n1 = Node(1, 0.0, 0.0, 0.0)
 n2 = Node(2, 5000.0, 0.0, 0.0)
 
 # Cantilever
+n1.restrain(0) #x
 n1.restrain(1) #y
 n1.restrain(2) #z
-n1.restrain(4) #ry
-n1.restrain(5) #rz
 
 # Loads
-n2.add_load(1, -1000.0)
+n2.add_load(0, -1000.0)
 
 # --------------------------------
 # MATERIAL AND SECTION
@@ -65,13 +64,12 @@ SECTION_1 = SteelSection(
 # --------------------------------
 # ELEMENTS
 # --------------------------------
-BEAM_1 = Beam(
+TRUSS_1 = Truss(
     element_id = "1,2",
     node_i = n1,
     node_j = n2,
     material = STEEL_1,
-    section = SECTION_1,
-    roll_radians = 0.0
+    section = SECTION_1
 )
 
 # Add UDL to element
@@ -82,7 +80,7 @@ BEAM_1 = Beam(
 # --------------------------------
 MODEL_1.add_node(n1)
 MODEL_1.add_node(n2)
-MODEL_1.add_element(BEAM_1)
+MODEL_1.add_element(TRUSS_1)
 MODEL_1.collect_node_dofs()
 MODEL_1.assign_dofs()
 
