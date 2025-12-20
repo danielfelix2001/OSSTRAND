@@ -4,7 +4,7 @@ from src.model.fixedEndForces.fefs import UDL
 from src.model.materials import SteelMaterial
 from src.model.sections import SteelSection
 from src.model.model import Model
-from src.model.dofs import DOF_NAMES, REACTION_NAMES
+from src.model.labels import DOF_NAMES, REACTION_NAMES
 
 """
 Global xyz system
@@ -24,13 +24,8 @@ n1.restrain(2) #z
 n1.restrain(4) #ry
 n1.restrain(5) #rz
 
-# --------------------------------
-# MATERIAL AND SECTION
-# should come from a database in the future
-# --------------------------------
 STEEL_1 = SteelMaterial(
     material_id = "A36",
-    density_KG_PER_M3 = 7850,   #kg/m^3
     nu = 0.30,
     E = 200000,        #MPa
     fy = 250,          #MPa
@@ -49,9 +44,6 @@ SECTION_1 = SteelSection(
     Zy = 27.2e+03    #mm^3
 )
 
-# --------------------------------
-# ELEMENTS
-# --------------------------------
 BEAM_1 = Beam(
     element_id = "1,2",
     node_i = n1,
@@ -61,25 +53,18 @@ BEAM_1 = Beam(
     roll_radians = 0.0
 )
 
-# --------------------------------
-# LOADS
-# --------------------------------
-
+# Loads
 n2.add_load(1, -1000.0) # N in global Y
 BEAM_1.add_load(UDL(qy = -1.0)) # N/mm, local y
 
-# --------------------------------
-# ASSEMBLY AND SOLVING
-# --------------------------------
+# Assembly
 MODEL_1.add_node(n1)
 MODEL_1.add_node(n2)
 MODEL_1.add_element(BEAM_1)
 
 MODEL_1.solve()
 
-# --------------------------------
-# RESULTS
-# --------------------------------
+# Results
 print("Node 1 Reactions:")
 for reactions, val in n1.reactions.items():
     print(f"{REACTION_NAMES[reactions]} = {val:.4e}")

@@ -35,10 +35,10 @@ class UDL(ElementLoad):
             f = self.qy * L / 2
             m = self.qy * L**2 / 12
 
-            fef[dof[(0, UY)]]  -= f     #dof[(node, dof_type)]
-            fef[dof[(0, RZ)]]  -= m
-            fef[dof[(1, UY)]]  -= f
-            fef[dof[(1, RZ)]] += m
+            fef[dof[(0, UY)]]  -= f     # dof[(node, dof_type)]
+            fef[dof[(0, RZ)]]  -= m     # node i = 0
+            fef[dof[(1, UY)]]  -= f     # node j = 1
+            fef[dof[(1, RZ)]]  += m
 
         # ---- Local z load → bending about y ----
         if self.qz != 0.0:

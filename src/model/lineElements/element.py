@@ -59,31 +59,41 @@ class Element:
         return sqrt(dx*dx + dy*dy + dz*dz)
     
     def local_axes(self): # direction cosines
-        dx = self.j.x - self.i.x
-        dy = self.j.y - self.i.y
-        dz = self.j.z - self.i.z  
-
         L = self.length()
-        x_local = np.array([dx/L, dy/L, dz/L]) #along element length
+        cos_phi = np.cos(self.roll)
+        sin_phi = np.sin(self.roll)
 
-        global_up = np.array([0.0, 1.0, 0.0])
-        if np.isclose(abs(np.dot(x_local, global_up)), 1.0):
-            global_up = np.array([0.0, 0.0, 1.0])  
+        lx = (self.j.x - self.i.x)/L
+        mx = (self.j.y - self.i.y)/L
+        nx = (self.j.z - self.i.z)/L
+        x_local = np.array([lx, mx, nx])
 
-        # Include angle of roll about local x axis
-        y0 = global_up - np.dot(global_up, x_local) * x_local
-        y0 /= np.linalg.norm(y0)
-        z0 = np.cross(x_local, y0)        
-
-        phi = self.roll
-        def rotate_about_local_x(v, axis, angle_rad):
-            cos_a, sin_a = np.cos(angle_rad), np.sin(angle_rad)
-            return (v * cos_a + 
-                    np.cross(axis, v) * sin_a + 
-                    axis * np.dot(axis, v) * (1 - cos_a))
-
-        y_local = rotate_about_local_x(y0, x_local, phi)
-        z_local = rotate_about_local_x(z0, x_local, phi)
+        ref_vector = np.array([0.0, 1.0, 0.0])
+       
+        if abs(np.dot(x_local, ref_vector))> 0.9:  # if element is almost vertical
+            denominator = sqrt(lx*lx + mx*mx)
+            y_local =  np.array([
+                (- mx * cos_phi - lx * nx * sin_phi) / denominator,
+                (  lx * cos_phi -  mx * nx * sin_phi) / denominator,
+                denominator * sin_phi
+            ])
+            z_local =  np.array([
+                ( mx * sin_phi - lx * nx * cos_phi) / denominator,
+                (- lx * sin_phi - mx * nx * cos_phi) / denominator,
+                denominator * cos_phi
+            ])
+        else: # if non-vertical
+            denominator = sqrt(lx*lx + nx*nx)
+            y_local = np.array([
+                (- lx * mx *cos_phi - nx * sin_phi) /denominator,
+                denominator * cos_phi,
+                (- mx * nx * cos_phi +  lx * sin_phi) /denominator
+            ])
+            z_local = np.array([
+                (lx * mx * sin_phi - nx * cos_phi) /denominator,
+                - denominator * sin_phi,
+                (mx * nx * sin_phi + lx * cos_phi) /denominator
+            ])
 
         return x_local, y_local, z_local
 
@@ -95,7 +105,6 @@ class Element:
     # ABSTRACT METHODS
     # IMPLEMENTED IN CHILD CLASSES
     # --------------------------------
-
     @abstractmethod
     def transformation_matrix(self): #12x12
         pass
@@ -118,10 +127,4 @@ class Element:
             for idx in self.NODE_DOF_INDICES:
                 dofs.append(node.dofs[idx])
         return dofs  
-    
-    def __repr__(self):
-        return (
-            f"Element(id={self.id}, "
-            f"node_i={self.i.id}, node_j={self.j.id}, "
-            f"length={self.length():.3f})"
-        )
+

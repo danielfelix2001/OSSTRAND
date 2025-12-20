@@ -3,7 +3,7 @@ from src.model.lineElements.truss import Truss
 from src.model.materials import SteelMaterial
 from src.model.sections import SteelSection
 from src.model.model import Model
-from src.model.dofs import DOF_NAMES, REACTION_NAMES
+from src.model.labels import DOF_NAMES, REACTION_NAMES
 
 """
 Global xyz system
@@ -41,70 +41,34 @@ n1.add_load(0,  200000.0)
 n1.add_load(1, -800000.0)
 n1.add_load(2, -600000.0)
 
-# --------------------------------
-# MATERIAL AND SECTION
-# should come from a database in the future
-# --------------------------------
+# Materials and Sections
 STEEL_1 = SteelMaterial(
     material_id = "A36",
-    density_KG_PER_M3 = 7850,   #kg/m^3
     nu = 0.30,
     E = 200000,        #MPa
-    fy = 250,          #MPa
-    fu = 400           #MPa
 )
 SECTION_1 = SteelSection(
     section_id = "W200x15", #W8x10 in english units
     shape_type = "W",
     area = 20000,     #mm^2
-    Ixx = 12.8e+06,  #mm^4
-    Iyy = 0.87e+06,  #mm^4
-    J = 17.7e+03,    #mm^4
-    Sx = 128e+03,    #mm^3
-    Sy = 17.4e+03,   #mm^3
-    Zx = 145e+03,    #mm^3
-    Zy = 27.2e+03    #mm^3
 )
 SECTION_2 = SteelSection(
     section_id = "W200x15", #W8x10 in english units
     shape_type = "W",
     area = 30000,     #mm^2
-    Ixx = 12.8e+06,  #mm^4
-    Iyy = 0.87e+06,  #mm^4
-    J = 17.7e+03,    #mm^4
-    Sx = 128e+03,    #mm^3
-    Sy = 17.4e+03,   #mm^3
-    Zx = 145e+03,    #mm^3
-    Zy = 27.2e+03    #mm^3
 )
 SECTION_3 = SteelSection(
     section_id = "W200x15", #W8x10 in english units
     shape_type = "W",
     area = 40000,     #mm^2
-    Ixx = 12.8e+06,  #mm^4
-    Iyy = 0.87e+06,  #mm^4
-    J = 17.7e+03,    #mm^4
-    Sx = 128e+03,    #mm^3
-    Sy = 17.4e+03,   #mm^3
-    Zx = 145e+03,    #mm^3
-    Zy = 27.2e+03    #mm^3
 )
 SECTION_4 = SteelSection(
     section_id = "W200x15", #W8x10 in english units
     shape_type = "W",
     area = 30000,     #mm^2
-    Ixx = 12.8e+06,  #mm^4
-    Iyy = 0.87e+06,  #mm^4
-    J = 17.7e+03,    #mm^4
-    Sx = 128e+03,    #mm^3
-    Sy = 17.4e+03,   #mm^3
-    Zx = 145e+03,    #mm^3
-    Zy = 27.2e+03    #mm^3
 )
 
-# --------------------------------
-# ELEMENTS
-# --------------------------------
+# Elements
 TRUSS_1 = Truss(
     element_id = "1,2",
     node_i = n1,
@@ -134,24 +98,16 @@ TRUSS_4 = Truss(
     section = SECTION_4
 )
 
-# --------------------------------
-# ASSEMBLY AND SOLVING
-# --------------------------------
-MODEL_1.add_node(n1)
-MODEL_1.add_node(n2)
-MODEL_1.add_node(n3)
-MODEL_1.add_node(n4)
-MODEL_1.add_node(n5)
-MODEL_1.add_element(TRUSS_1)
-MODEL_1.add_element(TRUSS_2)
-MODEL_1.add_element(TRUSS_3)
-MODEL_1.add_element(TRUSS_4)
+# Assembly
+for n in (n1, n2, n3, n4, n5):
+    MODEL_1.add_node(n)
+
+for truss in (TRUSS_1, TRUSS_2, TRUSS_3, TRUSS_4):
+    MODEL_1.add_element(truss)
 
 MODEL_1.solve()
 
-# --------------------------------
-# RESULTS
-# --------------------------------
+# Results
 print("\nNode 1 Displacements:")
 for dof, val in n1.displacements.items():
     print(f"{DOF_NAMES[dof]} = {val:.4e}")

@@ -1,4 +1,4 @@
-# src/model/dofs.py
+# src/model/labels.py
 
 DOF_NAMES = {
     0: "UX", 1: "UY", 2: "UZ",

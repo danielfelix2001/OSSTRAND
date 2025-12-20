@@ -2,37 +2,38 @@
 
 class Material:
     def __init__(self, material_id: str, 
-                 density_KG_PER_M3: float, 
-                 E: float, 
-                 nu: float):
+                 E: float = 0.0, 
+                 G: float | None = None,
+                 nu: float = 0.0,
+                 gamma: float = 0.0):
         self.id = material_id
-        self.density_KG_PER_M3 = density_KG_PER_M3  # in kg/m^3
-        self.E = E  # in MPa
+        self.E = E  
+        self._G = G 
         self.nu = nu  # Poisson's ratio
+        self.gamma = gamma  # unit weight
 
-    @property #decorator to make G a "variable" instead of a method
-    def G(self):
-        return self.E / (2 * (1 + self.nu))
-    
     @property
-    def unit_weight_N_PER_MM3(self):
-        return self.density_KG_PER_M3 * 9.81e-9  # in N/mm^3
-    
+    def G(self):
+        if self._G is not None:
+            return self._G
+        return self.E / (2 * (1 + self.nu))
+        
     def __repr__(self):
         return (f"Material(id={self.id}, E={self.E}, "
-                f"nu={self.nu}, density={self.density_KG_PER_M3})")
+                f"nu={self.nu}, gamma={self.gamma})")
     
 class SteelMaterial(Material):
     def __init__(self, material_id: str,
-                 E: float,
-                 nu: float,
-                 density_KG_PER_M3: float,
-                 fy: float,
+                 E: float = 0.0,
+                 G: float | None = None,
+                 nu: float = 0.0,
+                 gamma: float = 0.0,
+                 fy: float | None = None,
                  fu: float | None = None):
-        super().__init__(material_id, density_KG_PER_M3, E, nu)
+        super().__init__(material_id, E, G, nu, gamma)
         self.fy = fy
         self.fu = fu
 
     def __repr__(self):
         return (f"SteelMaterial(id={self.id}, E={self.E}, "
-                f"fy={self.fy}, density={self.density_KG_PER_M3})")
+                f"fy={self.fy}, gamma={self.gamma})")

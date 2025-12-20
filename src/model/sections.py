@@ -3,7 +3,7 @@
 class Section:
     def __init__(self, section_id: str, 
                  area: float, 
-                 Ixx: float, Iyy: float, J: float):
+                 Ixx: float = 0.0, Iyy: float = 0.0, J: float = 0.0):
         self.id = section_id
         self.area = area
         self.Ixx = Ixx     #not about member length, but about strong axis
@@ -17,10 +17,10 @@ class Section:
 class SteelSection(Section):
     def __init__(self, section_id: str, 
                  area: float, 
-                 Ixx: float, Iyy: float, J: float,                 
-                 shape_type: str,
-                 Sx: float, Sy: float,
-                 Zx: float, Zy: float):
+                 Ixx: float = 0.0, Iyy: float = 0.0, J: float = 0.0,                 
+                 shape_type: str = "",
+                 Sx: float = 0.0, Sy: float = 0.0,
+                 Zx: float = 0.0, Zy: float = 0.0):
         super().__init__(section_id, area, Ixx, Iyy, J)
         self.shape_type = shape_type
         self.Sx = Sx    #section modulus strong axis
