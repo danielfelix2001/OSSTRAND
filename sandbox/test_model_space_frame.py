@@ -1,11 +1,14 @@
-from src.model.nodes import Node
-from src.model.lineElements.frame import Frame
-from src.model.fixedEndForces.fefs import UDL
-from src.model.materials import Material
-from src.model.sections import Section
-from src.model.model import Model
-from src.model.labels import DOF_NAMES, REACTION_NAMES
+from source.model.nodes import Node
+from source.model.lineElements.frame import Frame
+from source.model.fixedEndForces.fefs import UDL
+from source.model.materials import Material
+from source.model.sections import Section
+from source.model.model import Model
+from source.model.functions import DOF_NAMES, GLOBAL_REACTION_NAMES, LOCAL_REACTION_NAMES
+
 PI = 3.14159265
+UX, UY, UZ = 0, 1, 2
+RX, RY, RZ = 3, 4, 5
 
 """
 Global xyz system
@@ -13,6 +16,7 @@ x to right
 y up
 z backward
 """
+
 # units in kip, inch
 MODEL_SPACE_FRAME = Model()
 
@@ -78,17 +82,17 @@ MODEL_SPACE_FRAME.solve()
 
 # Results
 print("\nNode 1 Displacements:")
-for dof, val in n1.displacements.items():
-    print(f"{DOF_NAMES[dof]} = {val:.4e}")
+for d, val in n1.displacements.items():
+    print(f"{DOF_NAMES[d]} = {val:.4e}")
 
 print("\nNode 2 Reactions:")
 for reactions, val in n2.reactions.items(): 
-    print(f"{REACTION_NAMES[reactions]} = {val:.4e}")
+    print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
 
 print("\nNode 3 Reactions:")
 for reactions, val in n3.reactions.items(): 
-    print(f"{REACTION_NAMES[reactions]} = {val:.4e}")
+    print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
 
 print("\nNode 4 Reactions:")
 for reactions, val in n4.reactions.items(): 
-    print(f"{REACTION_NAMES[reactions]} = {val:.4e}")
+    print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")

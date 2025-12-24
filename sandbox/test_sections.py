@@ -2,7 +2,7 @@
 
 import sys
 sys.path.append(".")
-from src.model.sections import Section, SteelSection
+from source.model.sections import Section, SteelSection
 
 W_section = SteelSection(
     section_id = "W200x15", #W8x10 in english units

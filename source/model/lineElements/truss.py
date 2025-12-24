@@ -1,6 +1,6 @@
-#src/model/lineElements/truss.py
+#source/model/lineElements/truss.py
 
-from src.model.lineElements.element import Element
+from source.model.lineElements.element import Element
 import numpy as np
 
 class Truss(Element):
@@ -10,6 +10,8 @@ class Truss(Element):
     def __init__(self, element_id, node_i, node_j, material, section):    
         super().__init__(element_id, node_i, node_j, material, section)
         self.fef_local = None
+        self.end_forces_local  = np.zeros(6)
+        self.end_forces_global = np.zeros(6)
 
     def transformation_matrix(self):
         x, _, _ = self.local_axes()

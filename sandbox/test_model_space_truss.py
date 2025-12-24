@@ -1,9 +1,10 @@
-from src.model.nodes import Node
-from src.model.lineElements.truss import Truss
-from src.model.materials import SteelMaterial
-from src.model.sections import SteelSection
-from src.model.model import Model
-from src.model.labels import DOF_NAMES, REACTION_NAMES
+from source.model.nodes import Node
+from source.model.lineElements.truss import Truss
+from source.model.materials import SteelMaterial
+from source.model.sections import SteelSection
+from source.model.model import Model
+from source.model.functions import DOF_NAMES, GLOBAL_REACTION_NAMES, LOCAL_REACTION_NAMES
+UX, UY, UZ = 0, 1, 2
 
 """
 Global xyz system
@@ -20,21 +21,9 @@ n3 = Node(3,  6000.0, -8000.0,  4000.0)
 n4 = Node(4,  6000.0, -8000.0, -2000.0)
 n5 = Node(5, -2000.0, -8000.0, -2000.0)
 
-n2.restrain(0) #x
-n2.restrain(1) #y
-n2.restrain(2) #z
-
-n3.restrain(0) #x
-n3.restrain(1) #y
-n3.restrain(2) #z
-
-n4.restrain(0) #x
-n4.restrain(1) #y
-n4.restrain(2) #z
-
-n5.restrain(0) #x
-n5.restrain(1) #y
-n5.restrain(2) #z
+for n in (n2, n3, n4, n5):
+    for U in (UX, UY, UZ):
+        n.restrain(U)
 
 # Loads
 n1.add_load(0,  200000.0)
@@ -114,20 +103,20 @@ for dof, val in n1.displacements.items():
 
 print("\nNode 2 Reactions:")
 for reactions, val in n2.reactions.items():
-    print(f"{REACTION_NAMES[reactions]} = {val:.4e}")
+    print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
 
 print("\nNode 3 Reactions:")
 for reactions, val in n3.reactions.items():
-    print(f"{REACTION_NAMES[reactions]} = {val:.4e}")
+    print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
 
 print("\nNode 4 Reactions:")
 for reactions, val in n4.reactions.items():
-    print(f"{REACTION_NAMES[reactions]} = {val:.4e}")
+    print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
 
 print("\nNode 5 Reactions:")
 for reactions, val in n5.reactions.items():
-    print(f"{REACTION_NAMES[reactions]} = {val:.4e}")
+    print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
 
-
+# Internal forces
 
 

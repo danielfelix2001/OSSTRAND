@@ -1,10 +1,12 @@
-from src.model.nodes import Node
-from src.model.lineElements.beam import Beam
-from src.model.fixedEndForces.fefs import UDL
-from src.model.materials import SteelMaterial
-from src.model.sections import SteelSection
-from src.model.model import Model
-from src.model.labels import DOF_NAMES, REACTION_NAMES
+from source.model.nodes import Node
+from source.model.lineElements.beam import Beam
+from source.model.fixedEndForces.fefs import UDL
+from source.model.materials import SteelMaterial
+from source.model.sections import SteelSection
+from source.model.model import Model
+from source.model.functions import DOF_NAMES, GLOBAL_REACTION_NAMES, LOCAL_REACTION_NAMES
+UX, UY, UZ = 0, 1, 2
+RX, RY, RZ = 3, 4, 5
 
 """
 Global xyz system
@@ -19,10 +21,10 @@ n1 = Node(1, 0.0, 0.0, 0.0)
 n2 = Node(2, 5000.0, 0.0, 0.0)
 
 # Cantilever restraints
-n1.restrain(1) #y
-n1.restrain(2) #z
-n1.restrain(4) #ry
-n1.restrain(5) #rz
+n1.restrain(UY) 
+n1.restrain(UZ) 
+n1.restrain(RY) 
+n1.restrain(RZ) 
 
 STEEL_1 = SteelMaterial(
     material_id = "A36",
@@ -54,8 +56,8 @@ BEAM_1 = Beam(
 )
 
 # Loads
-n2.add_load(1, -1000.0) # N in global Y
-BEAM_1.add_load(UDL(qy = -1.0)) # N/mm, local y
+# n2.add_load(1, -1000.0) # N in global Y
+BEAM_1.add_load(UDL(wy = -1.0)) # N/mm, local y
 
 # Assembly
 MODEL_1.add_node(n1)
@@ -67,10 +69,18 @@ MODEL_1.solve()
 # Results
 print("Node 1 Reactions:")
 for reactions, val in n1.reactions.items():
-    print(f"{REACTION_NAMES[reactions]} = {val:.4e}")
+    print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
 
 print("\nNode 2 Displacements:")
 for dof, val in n2.displacements.items():
     print(f"{DOF_NAMES[dof]} = {val:.4e}")
 
+# Location along length L
+x = 2500
 
+# Internal Forces
+print("\nInternal Forces at x = {2500}")
+print(f"{LOCAL_REACTION_NAMES[UY]} = {MODEL_1.element["1,2"].Vy_internal(x):.4e}")
+print(f"{LOCAL_REACTION_NAMES[UZ]} = {MODEL_1.element["1,2"].Vz_internal(x):.4e}")
+print(f"{LOCAL_REACTION_NAMES[RY]} = {MODEL_1.element["1,2"].My_internal(x):.4e}")
+print(f"{LOCAL_REACTION_NAMES[RZ]} = {MODEL_1.element["1,2"].Mz_internal(x):.4e}")

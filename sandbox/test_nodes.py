@@ -1,6 +1,6 @@
-# sandbox/test_nodes.py
+#sandbox/test_nodes.py
 
-from src.model.nodes import Node
+from source.model.nodes import Node
 
 # Create some nodes
 n1 = Node(1, 0.0, 0.0)

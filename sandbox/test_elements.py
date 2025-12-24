@@ -3,8 +3,8 @@
 import sys
 sys.path.append(".")
 
-from src.model.nodes import Node
-from src.model.lineElements.element import Element
+from source.model.nodes import Node
+from source.model.lineElements.element import Element
 
 n1 = Node(1, 0, 0)
 n2 = Node(2, 3, 4)

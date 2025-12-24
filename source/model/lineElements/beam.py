@@ -1,15 +1,17 @@
-#src/model/lineElements/beam.py
+#source/model/lineElements/beam.py
 
-from src.model.lineElements.frame import Frame
+from source.model.lineElements.frame import Frame
 import numpy as np
 
 class Beam(Frame):
     DOFS_PER_NODE = ["uy", "uz", "ry", "rz"]
     NODE_DOF_INDICES = [1, 2, 4, 5]
     
-    def __init__(self, element_id, node_i, node_j, material, section, roll_radians = 0):    
+    def __init__(self, element_id, node_i, node_j, material, section, roll_radians = 0.0):    
         super().__init__(element_id, node_i, node_j, material, section, roll_radians)
         self.fef_local = np.zeros(8) # fefs in local coordinates
+        self.end_forces_local  = np.zeros(8)
+        self.end_forces_global = np.zeros(8)
     
     def transformation_matrix(self): #8x8
         R = self.rotation_matrix()

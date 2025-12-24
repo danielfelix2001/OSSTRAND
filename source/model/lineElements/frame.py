@@ -1,15 +1,17 @@
-#src/model/lineElements/frame.py
+#source/model/lineElements/frame.py
 
-from src.model.lineElements.element import Element
+from source.model.lineElements.element import Element
 import numpy as np
 
 class Frame(Element):
     DOFS_PER_NODE = ["ux", "uy", "uz", "rx", "ry", "rz"]
     NODE_DOF_INDICES = [0, 1, 2, 3, 4, 5]
 
-    def __init__(self, element_id, node_i, node_j, material, section, roll_radians = 0):    
+    def __init__(self, element_id, node_i, node_j, material, section, roll_radians = 0.0):    
         super().__init__(element_id, node_i, node_j, material, section, roll_radians)
         self.fef_local = np.zeros(12) # fefs in local coordinates
+        self.end_forces_local  = np.zeros(12)
+        self.end_forces_global = np.zeros(12)
 
     def transformation_matrix(self): #12x12
         R = self.rotation_matrix()
@@ -27,7 +29,6 @@ class Frame(Element):
         J = self.section.J
         L = self.length()
 
-        # If y is up,       
         Iy = self.section.Iyy # weak axis is bending about y
         Iz = self.section.Ixx # strong axis is bending about z
 

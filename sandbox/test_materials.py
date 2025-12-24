@@ -2,7 +2,7 @@
 
 import sys
 sys.path.append(".")
-from src.model.materials import Material, SteelMaterial
+from source.model.materials import Material, SteelMaterial
 
 Steel1 = SteelMaterial(
     material_id = "A36",
