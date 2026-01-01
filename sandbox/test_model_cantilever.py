@@ -2,7 +2,7 @@ from source.model.nodes import Node
 from source.model.lineElements.beam import Beam
 from source.model.fixedEndForces.fefs import UDL
 from source.model.materials import SteelMaterial
-from source.model.sections import SteelSection
+from source.model.sections import WSection
 from source.model.model import Model
 from source.model.functions import DOF_NAMES, GLOBAL_REACTION_NAMES, LOCAL_REACTION_NAMES
 UX, UY, UZ = 0, 1, 2
@@ -33,7 +33,7 @@ STEEL_1 = SteelMaterial(
     fy = 250,          #MPa
     fu = 400           #MPa
 )
-SECTION_1 = SteelSection(
+SECTION_1 = WSection(
     section_id = "W200x15", #W8x10 in english units
     shape_type = "W",
     area = 1910,     #mm^2

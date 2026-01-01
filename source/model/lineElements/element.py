@@ -35,7 +35,7 @@ class Element:
         self.dofs_to_vector_index = local_dof_map(self)
 
     @property
-    def ndof_element(self):
+    def numberOfDOFs(self):
         return len(self.NODE_DOF_INDICES) * 2
 
     # --------------------------------
@@ -133,7 +133,7 @@ class Element:
     def compute_fef(self):
         self.fef_local[:] = 0.0 
         for load in self.loads:
-            self.fef_local += load.fef_local(self)
+            self.fef_local += load.fef_local(self) # this is the correct sign for reaction 
     #endregion
     
     # --------------------------------
@@ -191,60 +191,96 @@ class Element:
     #region
     # AXIAL
     def Nx_internal(self, x) -> float:
-        Nx_int = self.Nx_i
-        Nx_load = 0.0
-
+        Nx_NODE_i = self.Nx_i
+        Nx_LOAD = 0.0
         for elementLoad in self.loads:
-            Nx_load += elementLoad.axial(x, self)
-        # compression is negative
-        return -Nx_int - Nx_load    
+            Nx_LOAD += elementLoad.axial(x, self)
+        return -(Nx_NODE_i + Nx_LOAD)    
     
     # SHEAR
     def Vy_internal(self, x) -> float:
-        Vy_int = self.Vy_i
-        Vy_load = 0.0
-
+        Vy_NODE_i = self.Vy_i
+        Vy_LOAD = 0.0
         for elementLoad in self.loads:
-            Vy_load += elementLoad.shear_y(x, self)
-        # clockwise inducing is positive
-        return Vy_int + Vy_load 
+            Vy_LOAD += elementLoad.shear_y(x, self)
+        return Vy_NODE_i + Vy_LOAD 
 
     def Vz_internal(self, x) -> float:
-        Vz_int = self.Vz_i
-        Vz_load = 0.0
-
+        Vz_NODE_i = self.Vz_i
+        Vz_LOAD = 0.0
         for elementLoad in self.loads:
-            Vz_load += elementLoad.shear_z(x, self)
-        # clockwise inducing is positive
-        return Vz_int + Vz_load 
+            Vz_LOAD += elementLoad.shear_z(x, self)
+        return Vz_NODE_i + Vz_LOAD 
 
     # BENDING    
     def My_internal(self, x) -> float:
-        My_int = self.My_i
-        My_load = 0.0
-
+        My_NODE_i = self.My_i + self.Vz_i * x
+        My_LOAD = 0.0
         for elementLoad in self.loads:
-            My_load += elementLoad.moment_y(x, self)
-        # frown inducing is negative
-        return -My_int - My_load 
+            My_LOAD += elementLoad.moment_y(x, self)
+        return My_NODE_i + My_LOAD 
 
     def Mz_internal(self, x) -> float:
-        Mz_int = self.Mz_i
-        Mz_load = 0.0
-
+        Mz_NODE_i = self.Mz_i - self.Vy_i * x
+        Mz_LOAD = 0.0
         for elementLoad in self.loads:
-            Mz_load += elementLoad.moment_z(x, self)
-        # frown inducing is negative
-        return -Mz_int - Mz_load 
+            Mz_LOAD += elementLoad.moment_z(x, self)
+        return -(Mz_NODE_i + Mz_LOAD) 
 
     # TORSION
     def Tx_internal(self, x) -> float:
-        Tx_int = self.Tx_i
-        Tx_load = 0.0
-
+        Tx_NODE_i = self.Tx_i
+        Tx_LOAD = 0.0
         for elementLoad in self.loads:
-            Tx_load += elementLoad.torsion(x, self)
-        # against shaft axis is negative
-        return -Tx_int - Tx_load
+            Tx_LOAD += elementLoad.torsion(x, self)
+        return -(Tx_NODE_i + Tx_LOAD)
     #endregion
     
+    # --------------------------------
+    # INTERNAL STRESS ACCESSORS
+    # --------------------------------
+    #region
+
+    # AXIAL 
+    # AXIAL STRESS P/A
+    def axial_stress(self, x) -> float:
+        # positive if tension, negative if compression
+        return self.Nx_internal(x) / self.section.area
+    
+    # BENDING STRESS Mc/I
+    def bending_stress_about_y(self, x, c_z) -> float:
+        """
+        Returns the bending stress about the y-axis
+        
+        :param x: Length along the member
+        :param c_z: Distance from the neutral axis
+        :return: Bending Stress taken about local y-axis
+        :rtype: float
+        """
+        # if positive bending, +z is in compression, should return negative
+        return self.My_internal(x) * (-c_z)/self.section.Iyy 
+    
+    def bending_stress_about_z(self, x, c_y) -> float:
+        """
+        Returns the bending stress about the z-axis
+        
+        :param x: Length along the member
+        :param c_y: Distance from the neutral axis
+        :return: Bending Stress taken about local z-axis
+        :rtype: float
+        """
+        # if positive bending, +y is in compression, should return negative
+        return self.Mz_internal(x)  * (-c_y)/self.section.Ixx 
+
+    def normal_stress(self, x, y, z):
+        F_a   = self.axial_stress(x)
+        F_b_y = self.bending_stress_about_y(x, z)
+        F_b_z = self.bending_stress_about_z(x, y)
+
+        return F_a + F_b_y + F_b_z
+    # SHEAR
+    # SIMPLE SHEAR STRESS V/A
+    def simple_shear_stress_along_y(self, x) -> float:
+        return self.Vy_internal(x) / self.section.area 
+    # BENDING SHEAR STRESS VQ/Ib
+    # TORSIONAL SHEAR STRESS Tr/J

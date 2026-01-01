@@ -15,6 +15,11 @@ LOCAL_REACTION_NAMES = {
     3: "Tx", 4: "My", 5: "Mz"
 }
 
+LOCAL_ELEMENT_REACTION_NAMES = {
+    0: "Nx_i", 1: "Vy_i", 2: "Vz_i", 3: "Tx_i", 4: "My_i", 5: "Mz_i",
+    6: "Nx_j", 7: "Vy_j", 8: "Vz_j", 9: "Tx_j", 10:"My_j", 11:"Mz_j"
+}
+
 def local_dof_map(element):
     """
     Converts DOF numbering to local fef vector indexing.\n

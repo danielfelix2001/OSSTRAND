@@ -1,7 +1,7 @@
 from source.model.nodes import Node
 from source.model.lineElements.truss import Truss
 from source.model.materials import SteelMaterial
-from source.model.sections import SteelSection
+from source.model.sections import WSection
 from source.model.model import Model
 from source.model.functions import DOF_NAMES, GLOBAL_REACTION_NAMES, LOCAL_REACTION_NAMES
 UX, UY, UZ = 0, 1, 2
@@ -36,22 +36,22 @@ STEEL_1 = SteelMaterial(
     nu = 0.30,
     E = 200000,        #MPa
 )
-SECTION_1 = SteelSection(
+SECTION_1 = WSection(
     section_id = "W200x15", #W8x10 in english units
     shape_type = "W",
     area = 20000,     #mm^2
 )
-SECTION_2 = SteelSection(
+SECTION_2 = WSection(
     section_id = "W200x15", #W8x10 in english units
     shape_type = "W",
     area = 30000,     #mm^2
 )
-SECTION_3 = SteelSection(
+SECTION_3 = WSection(
     section_id = "W200x15", #W8x10 in english units
     shape_type = "W",
     area = 40000,     #mm^2
 )
-SECTION_4 = SteelSection(
+SECTION_4 = WSection(
     section_id = "W200x15", #W8x10 in english units
     shape_type = "W",
     area = 30000,     #mm^2

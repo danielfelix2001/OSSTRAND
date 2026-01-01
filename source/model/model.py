@@ -32,9 +32,9 @@ class Model:
 
     def solve(self):
     #def collect_node_dofs(self):
-        for e in self.element.values():
-            for node in (e.i, e.j):
-                for dof in e.NODE_DOF_INDICES:
+        for element in self.element.values():
+            for node in (element.i, element.j):
+                for dof in element.NODE_DOF_INDICES:
                     if dof not in node.dofs:
                         node.dofs[dof] = None
                         node.restraints.setdefault(dof, False)

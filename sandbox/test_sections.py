@@ -2,12 +2,14 @@
 
 import sys
 sys.path.append(".")
-from source.model.sections import Section, SteelSection
+from source.model.sections import Section, WSection
 
-W_section = SteelSection(
+W_section = WSection(
     section_id = "W200x15", #W8x10 in english units
     shape_type = "W",
     area = 1910,     #mm^2
+    y_bar = 100,     #mm
+    x_bar = 50,     
     Ixx = 12.8e+06,  #mm^4
     Iyy = 0.87e+06,  #mm^4
     J = 17.7e+03,    #mm^4

@@ -2,7 +2,7 @@
 
 class Section:
     def __init__(self, section_id: str, 
-                 area: float, 
+                 area: float,
                  Ixx: float = 0.0, Iyy: float = 0.0, J: float = 0.0):
         self.id = section_id
         self.area = area
@@ -14,9 +14,9 @@ class Section:
     def __repr__(self):
         return f"Section(id={self.id}, area={self.area}, Ixx={self.Ixx}, Iyy={self.Iyy}, J={self.J})"
     
-class SteelSection(Section):
+class WSection(Section):
     def __init__(self, section_id: str, 
-                 area: float, 
+                 area: float,
                  Ixx: float = 0.0, Iyy: float = 0.0, J: float = 0.0,                 
                  shape_type: str = "",
                  Sx: float = 0.0, Sy: float = 0.0,

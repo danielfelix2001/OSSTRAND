@@ -4,11 +4,11 @@ from source.model.fixedEndForces.fefs import UDL
 from source.model.materials import Material
 from source.model.sections import Section
 from source.model.model import Model
-from source.model.functions import DOF_NAMES, GLOBAL_REACTION_NAMES, LOCAL_REACTION_NAMES
+from source.model.functions import DOF_NAMES, GLOBAL_REACTION_NAMES, LOCAL_REACTION_NAMES, LOCAL_ELEMENT_REACTION_NAMES
 
 PI = 3.14159265
-UX, UY, UZ = 0, 1, 2
-RX, RY, RZ = 3, 4, 5
+FX, FY, FZ = 0, 1, 2
+MX, MY, MZ = 3, 4, 5
 
 """
 Global xyz system
@@ -68,9 +68,9 @@ ELEMENT_3 = Frame(
 )
 
 # Loads
-n1.add_load(3, -1800.0) # Mx, -150 kip-ft
-n1.add_load(5, 1800.0) # Mz, -150 kip-ft
-ELEMENT_1.add_load(UDL(qy = -0.25)) # qy, 3 kip/ft
+n1.add_load(MX, -1800.0) # Mx, -150 kip-ft
+n1.add_load(MZ,  1800.0) # Mz, 150 kip-ft
+# ELEMENT_1.add_load(UDL(wy = -0.25)) # qy, 3 kip/ft
 
 # Assembly
 for node in (n1, n2, n3, n4):
@@ -81,6 +81,7 @@ for element in (ELEMENT_1, ELEMENT_2, ELEMENT_3):
 MODEL_SPACE_FRAME.solve()
 
 # Results
+
 print("\nNode 1 Displacements:")
 for d, val in n1.displacements.items():
     print(f"{DOF_NAMES[d]} = {val:.4e}")
@@ -96,3 +97,28 @@ for reactions, val in n3.reactions.items():
 print("\nNode 4 Reactions:")
 for reactions, val in n4.reactions.items(): 
     print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
+
+print("\nElement 1 End Forces")
+forces = ["Nx_i", "Vy_i", "Vz_i", "Tx_i", "My_i", "Mz_i",
+                  "Nx_j", "Vy_j", "Vz_j", "Tx_j", "My_j", "Mz_j"]
+for index, force in enumerate(forces):
+    print(f"{LOCAL_ELEMENT_REACTION_NAMES[index]} = {getattr(ELEMENT_1, force):4f}")
+
+print("\nElement 1 Internal Forces")
+location = [0.0, 120.0, 240.0] # start, midspan, end
+
+internalForces = ["Nx_internal", "Vy_internal", "Vz_internal", "Tx_internal", "My_internal", "Mz_internal"]
+for x in location:
+    for index, force in enumerate(internalForces):
+        print(f"{LOCAL_REACTION_NAMES[index]}({x})  = {getattr(ELEMENT_1, force)(x):4f}")
+    print("")
+
+print("\nElement 1 Internal Stresses")
+y = 100.0
+z = 50.0
+for x in location:
+    print(f"Axial Stress at {x}                 = {ELEMENT_1.axial_stress(x):4f}")
+    print(f"Bending Stress about y at {x}       = {ELEMENT_1.bending_stress_about_y(x, z):4f}")
+    print(f"Bending Stress about z at {x}       = {ELEMENT_1.bending_stress_about_z(x, y):4f}")
+    print(f"Normal Stress at {x}                = {ELEMENT_1.normal_stress(x, y, z):4f}")
+    print("")
