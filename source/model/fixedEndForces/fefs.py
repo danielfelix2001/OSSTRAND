@@ -16,8 +16,12 @@ class ElementLoad(ABC):
         """
         pass
 
-    # Analytical Internal Force increments
+    # Analytical Internal Force Contributions
     # Will be called in Element class to compute internal forces
+    # The formula for internal force is:
+    # F_int(x) = F_NODE_i + ∑F_LOAD(x)
+    # Applied Local End Forces is F_NODE_i
+    # shear_y, moment_z, etc. are ∑F_LOAD(x)
 
     # Local y 
     def shear_y(self, x, element):
@@ -124,7 +128,7 @@ class SelfWeight(ElementLoad):
             fefs[dofs_to_idx[(NODE_j, ry)]] -= m
 
         # ---- Local x load ----
-        if (NODE_i, ux) and self.wx != 0.0:    # checks if NODE_i has UX dof (for beams)
+        if (NODE_i, ux) in dofs_to_idx and self.wx != 0.0:    # checks if NODE_i has UX dof (for beams)
             f = self.wx * L / 2
 
             fefs[dofs_to_idx[(NODE_i, ux)]] -= f
@@ -158,7 +162,7 @@ class AxialUDL(ElementLoad):
         fefs = np.zeros(nd)
         dofs_to_idx = element.dofs_to_vector_index
 
-        if (NODE_i, ux) and self.wx != 0.0:    # checks just to be sure
+        if (NODE_i, ux) in dofs_to_idx and self.wx != 0.0:    # checks just to be sure
             f = self.wx * L / 2
 
             fefs[dofs_to_idx[(NODE_i, ux)]] -= f
@@ -179,11 +183,13 @@ class PointLoad(ElementLoad):
     
     def fef_local(self, element):
         L = element.length()
+        a = self.a
+        b = L-a
         nd = element.numberOfDOFs
         fefs = np.zeros(nd)
         dofs_to_idx = element.dofs_to_vector_index
 
-        if (NODE_i, ux) and self.wx != 0.0:    # checks just to be sure
+        if (NODE_i, ux) in dofs_to_idx and self.px != 0.0:    # checks just to be sure
             f_i = self.px * (L-self.a)/L
             f_j = self.px * self.a/L
 
@@ -191,86 +197,76 @@ class PointLoad(ElementLoad):
             fefs[dofs_to_idx[(NODE_j, ux)]] -= f_j
 
         if self.py != 0.0:
-            f_i = self.py * (L-self.a)/L
-            f_j = self.py * self.a/L
+            f_i = self.py * b**2 * (3*a + b) / L**3
+            m_i = self.py * a * b**2 / L**2
+            f_j = self.py * a**2 * (3*b + a) / L**3
+            m_j = self.py * b * a**2 / L**2
 
             fefs[dofs_to_idx[(NODE_i, uy)]] -= f_i
+            fefs[dofs_to_idx[(NODE_i, rz)]] -= m_i 
             fefs[dofs_to_idx[(NODE_j, uy)]] -= f_j
+            fefs[dofs_to_idx[(NODE_j, rz)]] += m_j
 
         if self.pz != 0.0:
-            f_i = self.pz * (L-self.a)/L
-            f_j = self.pz * self.a/L
+            f_i = self.pz * b**2 * (3*a + b) / L**3
+            m_i = self.pz * a * b**2 / L**2
+            f_j = self.pz * a**2 * (3*b + a) / L**3
+            m_j = self.pz * b * a**2 / L**2
 
-            fefs[dofs_to_idx[(NODE_i, uz)]] -= f_i
-            fefs[dofs_to_idx[(NODE_j, uz)]] -= f_j
+            fefs[dofs_to_idx[(NODE_i, uy)]] -= f_i
+            fefs[dofs_to_idx[(NODE_i, rz)]] += m_i 
+            fefs[dofs_to_idx[(NODE_j, uy)]] -= f_j
+            fefs[dofs_to_idx[(NODE_j, rz)]] -= m_j
 
         return fefs
     
     # Local y
     def shear_y(self, x, element):
-        L = element.length()
-        a = self.a
         Vy = 0.0
-
         # discontinuous at x = a
-        if x < a:
-            Vy = self.py * (L-a)/L
-        if x > a:
-            Vy = self.py * a/L
+        if x < self.a:
+            Vy = 0.0
+        if x > self.a:
+            Vy = self.py
         return Vy
     
     def moment_z(self, x, element):
-        L = element.length()
-        a = self.a
         Mz = 0.0
-
-        if x == a:
-            Mz = self.py * a * (L-a) / L
-        if x < a:
-            Mz = self.py * x * (L-a) / L
-        if x > a:
-            Mz = self.py * a * (L-x) / L
+        # discontinuous at x = a
+        if x < self.a:
+            Mz = 0
+        if x > self.a:
+            Mz = self.py * (x-self.a)
         return Mz
 
     # Local z    
     def shear_z(self, x, element):
-        L = element.length()
-        a = self.a
         Vz = 0.0
-
         # discontinuous at x = a
-        if x < a:
-            Vz = self.pz * (L-a)/L
-        if x > a:
-            Vz = self.pz * a/L
+        if x < self.a:
+            Vz = 0.0
+        if x > self.a:
+            Vz = self.pz
         return Vz
     
     def moment_y(self, x, element):
-        L = element.length()
-        a = self.a
         My = 0.0
-
-        if x == a:
-            My = self.pz * a * (L-a) / L
-        if x < a:
-            My = self.pz * x * (L-a) / L
-        if x > a:
-            My = self.pz * a * (L-x) / L
+        # discontinuous at x = a
+        if x < self.a:
+            My = 0
+        if x > self.a:
+            My = self.pz * (x-self.a)
         return My
     
     # Local x
     def axial(self, x, element):
-        L = element.length()
-        a = self.a
         Nx = 0.0
-
         # discontinuous at x = a
-        if x < a:
-            Nx = self.px * (L-a)/L
-        if x > a:
-            Nx = self.px * a/L
+        if x < self.a:
+            Nx = 0.0
+        if x > self.a:
+            Nx = self.px
         return Nx
-    
 
 class PolynomialLoad(ElementLoad):
     # use integration to compute fef
