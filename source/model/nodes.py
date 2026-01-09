@@ -12,6 +12,7 @@ class Node:
 
         self.displacements = {}
         self.reactions = {}
+        
 
     def restrain(self, dof_name):
         self.restraints[dof_name] = True
@@ -19,5 +20,11 @@ class Node:
     def add_load(self, dof_name: int, value: float):
         self.loads[dof_name] = self.loads.get(dof_name, 0.0) + value
 
-    def __repr__(self):
-        return f"Node(id={self.id}, x={self.x}, y={self.y}, z={self.z})"
+    # --------------------------------
+    # QUERYING API
+    # --------------------------------
+    def displacement(self, dof):
+        return self.displacements[dof]
+
+    def reaction(self, dof):
+        return self.reactions[dof]

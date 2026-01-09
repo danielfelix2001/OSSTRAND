@@ -6,7 +6,7 @@ class Section:
                  Ixx: float = 0.0, Iyy: float = 0.0, J: float = 0.0):
         self.id = section_id
         self.area = area
-        self.Ixx = Ixx     #not about member length, but about strong axis
+        self.Ixx = Ixx  # about strong axis
         self.Iyy = Iyy
         self.J = J
         #self.material = material

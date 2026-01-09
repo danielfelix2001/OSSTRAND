@@ -30,16 +30,16 @@ class Model:
     def add_section(self, section):
         self.section[section.id] = section
 
-    def solve(self):
-    #def collect_node_dofs(self):
+    def collect_node_dofs(self):
         for element in self.element.values():
             for node in (element.i, element.j):
                 for dof in element.NODE_DOF_INDICES:
                     if dof not in node.dofs:
-                        node.dofs[dof] = None
+                        # element dictates what DOFs are available for the node
+                        node.dofs[dof] = None   
                         node.restraints.setdefault(dof, False)
 
-    #def assign_dofs(self):
+    def assign_dofs(self):
         self.free_dofs = []
         self.restrained_dofs = []
 
@@ -54,20 +54,20 @@ class Model:
                 dof_counter += 1
         self.ndof = dof_counter
     
-    #def assemble_stiffness(self):
+    def assemble_stiffness(self):
         self.K_full = np.zeros((self.ndof, self.ndof))
 
         for element in self.element.values():
             K = element.global_stiffness()
-            dofs = element.get_dof_indices()
+            dofs = element.get_dof_indices() # available DOFs from the element 
             nd = len(dofs)
             
-            for i in range(nd):
+            for i in range(nd):     # i and j are the global stiffness indices (row, col)
                 for j in range(nd):
                     if dofs[i] is not None and dofs[j] is not None:
                         self.K_full[dofs[i], dofs[j]] += K[i, j]
 
-    #def assemble_loads(self):
+    def assemble_loads(self):
         self.F_full = np.zeros(self.ndof)
 
         for node in self.node.values():  
@@ -76,7 +76,7 @@ class Model:
                     continue
                 self.F_full[global_dof] += node.loads.get(dof_name, 0.0)
 
-    #def assemble_fixed_end_forces(self):
+    def assemble_fixed_end_forces(self):
         for element in self.element.values():
             if element.fef_local is None: # skip if truss
                 continue
@@ -92,7 +92,53 @@ class Model:
                     # subtract because FEFs are reactions
                     self.F_full[global_dof] -= fef_global[i]
 
-    #def solve(self):
+    def is_stable(self, tol=1e-8):
+        """
+        Checks structural stability by examining eigenvalues of K_ff.
+        Reports which node DOFs participate in zero-energy modes.
+        """
+
+        # Extract free–free stiffness matrix
+        free = self.free_dofs
+        K_ff = self.K_full[np.ix_(free, free)]
+
+        # Eigen-decomposition
+        eigvals, eigvecs = np.linalg.eig(K_ff)
+
+        unstable_modes = []
+        for i, lam in enumerate(eigvals):
+            if abs(lam) < tol:
+                unstable_modes.append(i)
+
+        if not unstable_modes:
+            print("Structure is stable.")
+            return True
+
+        print("STRUCTURE IS UNSTABLE")
+        print(f"Detected {len(unstable_modes)} instability mode(s)\n")
+
+        # Map free DOF index → (node, dof_name)
+        dof_map = {}
+        for node in self.nodes.values():
+            for dof_name, gidx in node.dofs.items():
+                if gidx in free:
+                    dof_map[gidx] = (node.id, dof_name)
+
+        # Report each unstable mode
+        for mode in unstable_modes:
+            print(f"Mode {mode + 1}:")
+            vec = eigvecs[:, mode]
+
+            for local_i, amp in enumerate(vec):
+                if abs(amp) > 1e-3:
+                    global_dof = free[local_i]
+                    node_id, dof_name = dof_map[global_dof]
+                    print(f"  Node {node_id} -> {dof_name} (amplitude {amp:.3f})")
+
+            print()
+        return False
+
+    def solve_matrix_equation(self):
         free = self.free_dofs
         K_ff = self.K_full[np.ix_(free, free)]
         F_f  = self.F_full[free]
@@ -102,7 +148,7 @@ class Model:
         self.D_full[free] = D_f
         self.reactions = self.K_full @ self.D_full - self.F_full
 
-    #def store_displacements(self):
+    def store_displacements(self):
         for node in self.node.values():
             for local_dof, global_dof in node.dofs.items():
                 if global_dof in self.free_dofs:
@@ -110,13 +156,13 @@ class Model:
                 else:
                     node.displacements[local_dof] = 0.0
 
-    #def store_reactions(self):
+    def store_reactions(self):
         for node in self.node.values():
             for local_dof, global_dof in node.dofs.items():
                 if global_dof in self.restrained_dofs:
                     node.reactions[local_dof] = self.reactions[global_dof]
 
-    #def compute_end_forces(self):
+    def compute_end_forces(self):
         for element in self.element.values():
             if element.fef_local is None: # skip if truss
                 continue
@@ -137,3 +183,20 @@ class Model:
             f_local = element.local_stiffness() @ d_local + element.fef_local
             element.end_forces_local[:] = f_local
             element.end_forces_global[:] = T.T @ f_local
+
+
+    def solve(self):
+        self.collect_node_dofs()
+        self.assign_dofs()
+        self.assemble_stiffness()
+        self.assemble_loads()
+        self.assemble_fixed_end_forces()
+        if self.is_stable():
+            self.solve_matrix_equation()
+            self.store_displacements()
+            self.store_reactions()
+            self.compute_end_forces()
+
+
+
+

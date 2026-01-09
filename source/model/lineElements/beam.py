@@ -4,7 +4,8 @@ from source.model.lineElements.frame import Frame
 import numpy as np
 
 class Beam(Frame):
-    DOFS_PER_NODE = ["uy", "uz", "ry", "rz"]
+    LOCAL_DOFS_PER_NODE = ["uy", "uz", "ry", "rz"]
+    FORCES_PER_NODE = ["Vy", "Vz", "My", "Mz"]    
     NODE_DOF_INDICES = [1, 2, 4, 5]
     
     def __init__(self, element_id, node_i, node_j, material, section, roll_radians = 0.0):    

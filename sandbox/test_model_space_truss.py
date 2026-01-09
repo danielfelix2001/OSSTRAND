@@ -37,22 +37,22 @@ STEEL_1 = SteelMaterial(
     E = 200000,        #MPa
 )
 SECTION_1 = WSection(
-    section_id = "W200x15", #W8x10 in english units
+    section_id = "TRUSS-1", 
     shape_type = "W",
     area = 20000,     #mm^2
 )
 SECTION_2 = WSection(
-    section_id = "W200x15", #W8x10 in english units
+    section_id = "TRUSS-2", 
     shape_type = "W",
     area = 30000,     #mm^2
 )
 SECTION_3 = WSection(
-    section_id = "W200x15", #W8x10 in english units
+    section_id = "TRUSS-3", 
     shape_type = "W",
     area = 40000,     #mm^2
 )
 SECTION_4 = WSection(
-    section_id = "W200x15", #W8x10 in english units
+    section_id = "TRUSS-4", 
     shape_type = "W",
     area = 30000,     #mm^2
 )
@@ -117,6 +117,5 @@ print("\nNode 5 Reactions:")
 for reactions, val in n5.reactions.items():
     print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
 
-# Internal forces
 
 

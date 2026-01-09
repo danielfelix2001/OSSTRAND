@@ -11,7 +11,8 @@ rx, ry, rz = 3, 4, 5
 NODE_i, NODE_j = 0, 1
 
 class Element:
-    DOFS_PER_NODE = [] # Element declares DOFs    
+    LOCAL_DOFS_PER_NODE = [] # Element declares DOFs    
+    FORCES_PER_NODE = []    
     NODE_DOF_INDICES = []
     
     def __init__(self, element_id: str, 
@@ -24,6 +25,9 @@ class Element:
         self.material = material
         self.section = section
         self.roll = roll_radians 
+        #connection type for user-defined elements 
+        #self.connection_i
+        #self.connection_j
 
         # Loads and reactions
         self.loads = []
@@ -98,7 +102,7 @@ class Element:
     # ---------------------------------------------
     #region
     @abstractmethod
-    def transformation_matrix(self): #12x12
+    def transformation_matrix(self):
         pass
     
     @abstractmethod
@@ -119,7 +123,7 @@ class Element:
         dofs = []
         for node in (self.i, self.j):
             for idx in self.NODE_DOF_INDICES:
-                dofs.append(node.dofs[idx])
+                dofs.append(node.dofs[idx]) # only add DOFs that the element asks for
         return dofs 
     #endregion 
 
@@ -284,3 +288,29 @@ class Element:
         return self.Vy_internal(x) / self.section.area 
     # BENDING SHEAR STRESS VQ/Ib
     # TORSIONAL SHEAR STRESS Tr/J
+    #endregion
+
+    # --------------------------------
+    # QUERYING API
+    # --------------------------------
+    def get_end_forces(self, node_label:str, local:bool):
+        endForceDict = {}
+        DOFs_PER_NODE = len(self.NODE_DOF_INDICES)
+        
+        if node_label == "i":
+            i = 0
+        elif node_label == "j":
+            i = DOFs_PER_NODE
+        else:
+            raise "Invalid Node Type: Select \"i\" or \"j\""
+
+        if local:
+            for force in self.FORCES_PER_NODE:
+                endForceDict[force] = float(self.end_forces_local[i])
+                i+=1
+        else:
+            for force in self.FORCES_PER_NODE:
+                endForceDict[force] = float(self.end_forces_global[i])
+                i+=1
+        return endForceDict
+

@@ -4,7 +4,8 @@ from source.model.lineElements.element import Element
 import numpy as np
 
 class Truss(Element):
-    DOFS_PER_NODE = ["ux", "uy", "uz"]
+    LOCAL_DOFS_PER_NODE = ["ux", "uy", "uz"]
+    FORCES_PER_NODE = ["Nx", "Vy", "Vz"]    
     NODE_DOF_INDICES = [0, 1, 2]
 
     def __init__(self, element_id, node_i, node_j, material, section):    
