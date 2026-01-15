@@ -4,9 +4,11 @@ from source.model.lineElements.element import Element
 import numpy as np
 
 class Truss(Element):
-    LOCAL_DOFS_PER_NODE = ["ux", "uy", "uz"]
-    FORCES_PER_NODE = ["Nx", "Vy", "Vz"]    
     NODE_DOF_INDICES = [0, 1, 2]
+    LOCAL_DOFS_PER_NODE = ["ux", "uy", "uz"]
+    LOCAL_FORCES_PER_NODE = ["Nx"]
+    
+    GLOBAL_FORCES_PER_NODE = ["NX", "VY", "VZ"]    
 
     def __init__(self, element_id, node_i, node_j, material, section):    
         super().__init__(element_id, node_i, node_j, material, section)
@@ -31,5 +33,9 @@ class Truss(Element):
 
         return np.array([[ k, -k],
                          [-k,  k]])
-     
+    
+    def global_stiffness(self):
+        T = self.transformation_matrix()
+        k_local = self.local_stiffness()
+        return T.T @ k_local @ T
      

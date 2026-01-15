@@ -8,12 +8,14 @@ from source.model.functions import DOF_NAMES, GLOBAL_REACTION_NAMES, LOCAL_REACT
 
 PI = 3.14159265
 # Force DOFs
-FX, FY, FZ = 0, 1, 2
-MX, MY, MZ = 3, 4, 5
+NX, VY, VZ = 0, 1, 2
+TX, MY, MZ = 3, 4, 5
+FORCE_DOFS = [NX, VY, VZ, TX, MY, MZ]
 
 # Displacement DOFs
 UX, UY, UZ = 0, 1, 2
 RX, RY, RZ = 3, 4, 5
+DISP_DOFS = [UX, UY, UZ, RX, RY, RZ]
 
 """
 Global xyz system
@@ -73,9 +75,9 @@ ELEMENT_3 = Frame(
 )
 
 # Loads
-n1.add_load(MX, -1800.0) # Mx, -150 kip-ft
+n1.add_load(TX, -1800.0) # Mx, -150 kip-ft
 n1.add_load(MZ,  1800.0) # Mz, 150 kip-ft
-ELEMENT_1.add_load(UDL(wy = -0.25)) # qy, 3 kip/ft
+ELEMENT_1.add_load(UDL(local = True, wy = -0.25)) # qy, 3 kip/ft
 
 # Assembly
 for node in (n1, n2, n3, n4):
@@ -87,8 +89,12 @@ MODEL_SPACE_FRAME.solve()
 
 # Results
 print("\nNode 1 Displacements:")
-for d, val in n1.displacements.items():
-    print(f"{DOF_NAMES[d]} = {val:.4e}")
+for disp in DISP_DOFS:
+    print(f"{DOF_NAMES[disp]}: {n1.DISPLACEMENT(disp):.3e}")
+
+print("\nElement 1 End Forces:")
+print(f"{ELEMENT_1.END_FORCES(node_label="i", local=True)}")
+print(f"{ELEMENT_1.END_FORCES(node_label="i", local=False)}")
 
 # print("\nNode 2 Reactions:")
 # for reactions, val in n2.reactions.items(): 

@@ -4,15 +4,22 @@ from source.model.lineElements.element import Element
 import numpy as np
 
 class Frame(Element):
-    LOCAL_DOFS_PER_NODE = ["ux", "uy", "uz", "rx", "ry", "rz"]
-    FORCES_PER_NODE = ["Nx", "Vy", "Vz", "Tx", "My", "Mz"]    
     NODE_DOF_INDICES = [0, 1, 2, 3, 4, 5]
+    LOCAL_DOFS_PER_NODE = ["ux", "uy", "uz", "rx", "ry", "rz"]
+    LOCAL_FORCES_PER_NODE = ["Nx", "Vy", "Vz", "Tx", "My", "Mz"]
 
+    GLOBAL_FORCES_PER_NODE = ["NX", "VY", "VZ", "TX", "MY", "MZ"]   
+     
     def __init__(self, element_id, node_i, node_j, material, section, roll_radians = 0.0):    
         super().__init__(element_id, node_i, node_j, material, section, roll_radians)
         self.fef_local = np.zeros(12) # fefs in local coordinates
         self.end_forces_local  = np.zeros(12)
         self.end_forces_global = np.zeros(12)
+
+        self.releases = {
+            "i": set(),
+            "j": set()
+        }
 
     def transformation_matrix(self): #12x12
         R = self.rotation_matrix()
@@ -67,5 +74,70 @@ class Frame(Element):
         k[4, 4]  = k[10,10] =  4*E*Iy / L
         k[4,10]  = k[10,4]  =  2*E*Iy / L
 
-        return k     
-  
+        return k 
+            
+    def release(self, node:str, dof):
+        """
+        Release a DOF at a node.\n
+        node (str): 'i' for start node or 'j' for end node.\n
+        dof (int): local DOF index (0-5).
+        """
+        if dof not in self.NODE_DOF_INDICES:
+            raise ValueError(f"Invalid DOF for Element: {dof}")
+        
+        if node == "j":
+            dof+=6    
+        elif node != "i":
+            raise ValueError(f"Invalid node: select 'i' or 'j'")
+        
+        self.releases[node].add(dof)
+
+    def apply_releases(self, k_local):
+        released = set(self.releases["i"]) | set(self.releases["j"])
+        if not released:
+            return k_local
+
+        kept = [i for i in range(12) if i not in released]
+
+        k_kk = k_local[np.ix_(kept, kept)]
+        k_kr = k_local[np.ix_(kept, list(released))]
+        k_rk = k_local[np.ix_(list(released), kept)]
+        k_rr = k_local[np.ix_(list(released), list(released))]
+
+        if k_rr.size == 0:
+            return k_local
+
+        k_cond = k_kk - k_kr @ np.linalg.inv(k_rr) @ k_rk
+
+        k_full = np.zeros((12, 12))
+        for a, i in enumerate(kept):
+            for b, j in enumerate(kept):
+                k_full[i, j] = k_cond[a, b]
+
+        return k_full
+
+    def global_stiffness(self):
+        T = self.transformation_matrix()
+        k_local = self.local_stiffness()
+        k_local = self.apply_releases(k_local)
+        return T.T @ k_local @ T
+    
+    # --------------------------------
+    # FIXED-END FORCES
+    # --------------------------------
+    def add_load(self, load):
+        self.loads.append(load)
+        
+    def compute_fef(self):
+        self.fef_local[:] = 0.0 
+        for load in self.loads:
+            self.fef_local += load.fef_local(self)
+
+        # Remove fefs on release dofs
+        NODE_i = 0
+        NODE_j = 1
+        for dof in self.releases["i"]:
+            self.fef_local[self.dofs_to_vector_index[NODE_i, dof]] = 0.0
+        for dof in self.releases["j"]:
+            self.fef_local[self.dofs_to_vector_index[NODE_j, dof]] = 0.0
+        

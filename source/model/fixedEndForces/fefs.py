@@ -42,15 +42,55 @@ class ElementLoad(ABC):
         return 0.0
     
 class UDL(ElementLoad):
-    def __init__(self, wy=0.0, wz=0.0):     # local axes only
-        self.wy = wy
-        self.wz = wz
+    def __init__(self, local:bool, wx=0.0, wy=0.0, wz=0.0):     
+        self.wx = 0.0
+        self.wy = 0.0
+        self.wz = 0.0
+        self.isLocal = local
+
+        # Containers
+        self.wxInput = wx
+        self.wyInput = wy
+        self.wzInput = wz
 
     def fef_local(self, element):
         L = element.length()
         nd = element.numberOfDOFs
         fefs = np.zeros(nd)
         dofs_to_idx = element.dofs_to_vector_index
+
+        if self.isLocal:
+            self.wx = self.wxInput
+            self.wy = self.wyInput
+            self.wz = self.wzInput
+
+        else:
+            x_global = np.array([1.0, 0.0, 0.0])
+            y_global = np.array([0.0, 1.0, 0.0])
+            z_global = np.array([0.0, 0.0, 1.0])
+        
+            x_local, y_local, z_local = element.local_axes()
+
+            # Decompose Global UDLs to local axes
+            # Local x
+            self.wx = (self.wxInput * np.dot(x_global, x_local) +
+                       self.wyInput * np.dot(y_global, x_local) +
+                       self.wzInput * np.dot(z_global, x_local))
+            # Local y
+            self.wy = (self.wxInput * np.dot(x_global, y_local) +
+                       self.wyInput * np.dot(y_global, y_local) +
+                       self.wzInput * np.dot(z_global, y_local))
+            # Local z
+            self.wz = (self.wxInput * np.dot(x_global, z_local) +
+                       self.wyInput * np.dot(y_global, z_local) +
+                       self.wzInput * np.dot(z_global, z_local))            
+
+        # ---- Local x load ----
+        if (NODE_i, ux) in dofs_to_idx and self.wx != 0.0:    # checks just to be sure
+            f = self.wx * L / 2
+
+            fefs[dofs_to_idx[(NODE_i, ux)]] -= f
+            fefs[dofs_to_idx[(NODE_j, ux)]] -= f
 
         # ---- Local y load → bending about z ----
         if self.wy != 0.0:
@@ -73,6 +113,10 @@ class UDL(ElementLoad):
             fefs[dofs_to_idx[(NODE_j, ry)]] -= m
 
         return fefs
+    
+    # Local x
+    def axial(self, x, element):
+        return self.wx * x
 
     # Local y 
     def shear_y(self, x, element):
@@ -85,7 +129,7 @@ class UDL(ElementLoad):
         return self.wz * x
     def moment_y(self, x, element):
         return 0.5 * self.wz * x**2
-    
+        
 class SelfWeight(ElementLoad):
     def __init__(self):
         self.wx = 0.0
@@ -151,36 +195,20 @@ class SelfWeight(ElementLoad):
     # Local x
     def axial(self, x, element):
         return self.wx * x
- 
-class AxialUDL(ElementLoad):
-    def __init__(self, wx = 0.0):
-        self.wx = wx
-    
-    def fef_local(self, element):
-        L = element.length()
-        nd = element.numberOfDOFs
-        fefs = np.zeros(nd)
-        dofs_to_idx = element.dofs_to_vector_index
-
-        if (NODE_i, ux) in dofs_to_idx and self.wx != 0.0:    # checks just to be sure
-            f = self.wx * L / 2
-
-            fefs[dofs_to_idx[(NODE_i, ux)]] -= f
-            fefs[dofs_to_idx[(NODE_j, ux)]] -= f
-
-        return fefs
-    
-    # Local x
-    def axial(self, x, element):
-        return self.wx * x
-    
+     
 class PointLoad(ElementLoad):
-    def __init__(self, a, px = 0.0, py = 0.0, pz = 0.0):   # local axes only
-        self.px = px
-        self.py = py
-        self.pz = pz
-        self.a  = a # distance from NODE_i
-    
+    def __init__(self, NODE_i_DISTANCE, local:bool, px = 0.0, py = 0.0, pz = 0.0):
+        self.px = 0.0
+        self.py = 0.0
+        self.pz = 0.0
+        self.a  = NODE_i_DISTANCE
+        self.isLocal = local
+
+        # Containers
+        self.pxInput = px
+        self.pyInput = py
+        self.pzInput = pz
+
     def fef_local(self, element):
         L = element.length()
         a = self.a
@@ -188,6 +216,32 @@ class PointLoad(ElementLoad):
         nd = element.numberOfDOFs
         fefs = np.zeros(nd)
         dofs_to_idx = element.dofs_to_vector_index
+
+        if self.isLocal:
+            self.px = self.pxInput
+            self.py = self.pyInput
+            self.pz = self.pzInput
+            
+        else:
+            x_global = np.array([1.0, 0.0, 0.0])
+            y_global = np.array([0.0, 1.0, 0.0])
+            z_global = np.array([0.0, 0.0, 1.0])
+        
+            x_local, y_local, z_local = element.local_axes()
+
+            # Decompose Global point loads to local axes
+            # Local x
+            self.px = (self.pxInput * np.dot(x_global, x_local) +
+                       self.pyInput * np.dot(y_global, x_local) +
+                       self.pzInput * np.dot(z_global, x_local))
+            # Local y
+            self.py = (self.pxInput * np.dot(x_global, y_local) +
+                       self.pyInput * np.dot(y_global, y_local) +
+                       self.pzInput * np.dot(z_global, y_local))
+            # Local z
+            self.pz = (self.pxInput * np.dot(x_global, z_local) +
+                       self.pyInput * np.dot(y_global, z_local) +
+                       self.pzInput * np.dot(z_global, z_local))             
 
         if (NODE_i, ux) in dofs_to_idx and self.px != 0.0:    # checks just to be sure
             f_i = self.px * (L-self.a)/L

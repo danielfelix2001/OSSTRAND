@@ -10,12 +10,14 @@ import numpy as np
 
 PI = 3.14159265
 # Force DOFs
-FX, FY, FZ = 0, 1, 2
-MX, MY, MZ = 3, 4, 5
+NX, VY, VZ = 0, 1, 2
+TX, MY, MZ = 3, 4, 5
+FORCE_DOFS = [NX, VY, VZ, TX, MY, MZ]
 
 # Displacement DOFs
 UX, UY, UZ = 0, 1, 2
 RX, RY, RZ = 3, 4, 5
+DISP_DOFS = [UX, UY, UZ, RX, RY, RZ]
 
 """
 Global xyz system

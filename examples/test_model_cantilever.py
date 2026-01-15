@@ -18,7 +18,7 @@ z backward
 MODEL_1 = Model()
 
 n1 = Node(1, 0.0, 0.0, 0.0)
-n2 = Node(2, 5000.0, 0.0, 0.0)
+n2 = Node(1, 5000.0, 0.0, 0.0)
 
 # Cantilever restraints
 n1.restrain(UY) 
@@ -57,7 +57,7 @@ BEAM_1 = Beam(
 
 # Loads
 # n2.add_load(1, -1000.0) # N in global Y
-BEAM_1.add_load(UDL(wy = -1.0)) # N/mm, local y
+BEAM_1.add_load(UDL(local = True, wy = -1.0)) # N/mm, local y
 
 # Assembly
 MODEL_1.add_node(n1)

@@ -1,4 +1,4 @@
-#src/model/sections.py
+# source/model/sections.py
 
 class Section:
     def __init__(self, section_id: str, 

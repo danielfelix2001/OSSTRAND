@@ -1,4 +1,4 @@
-#src/model/materials.py
+# source/model/materials.py
 
 class Material:
     def __init__(self, material_id: str, 

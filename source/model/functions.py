@@ -1,4 +1,4 @@
-# src/model/functions.py
+# source/model/functions.py
 
 DOF_NAMES = {
     0: "UX", 1: "UY", 2: "UZ",

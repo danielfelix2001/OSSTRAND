@@ -1,4 +1,4 @@
-#src/model/nodes.py
+# source/model/nodes.py
 
 class Node:
     def __init__(self, node_id: 
@@ -6,7 +6,7 @@ class Node:
         self.id = node_id
         self.x, self.y, self.z = x, y, z
 
-        self.dofs = {}
+        self.dofs = {}  # Model-level DOF index 
         self.restraints = {}
         self.loads = {}
 
@@ -23,8 +23,8 @@ class Node:
     # --------------------------------
     # QUERYING API
     # --------------------------------
-    def displacement(self, dof):
+    def DISPLACEMENT(self, dof):
         return self.displacements[dof]
 
-    def reaction(self, dof):
+    def REACTION(self, dof):
         return self.reactions[dof]

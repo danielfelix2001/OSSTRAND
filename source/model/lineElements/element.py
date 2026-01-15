@@ -4,6 +4,7 @@ from abc import abstractmethod
 from math import sqrt
 from source.model.nodes import Node
 from source.model.functions import local_dof_map
+from source.model.exceptions import ElementError, ModelDefinitionError
 import numpy as np
 
 ux, uy, uz = 0, 1, 2
@@ -11,9 +12,11 @@ rx, ry, rz = 3, 4, 5
 NODE_i, NODE_j = 0, 1
 
 class Element:
-    LOCAL_DOFS_PER_NODE = [] # Element declares DOFs    
-    FORCES_PER_NODE = []    
     NODE_DOF_INDICES = []
+    LOCAL_DOFS_PER_NODE = [] # Element declares DOFs    
+    LOCAL_FORCES_PER_NODE = []    
+
+    GLOBAL_FORCES_PER_NODE = []    
     
     def __init__(self, element_id: str, 
                  node_i: Node, node_j: Node, 
@@ -25,9 +28,6 @@ class Element:
         self.material = material
         self.section = section
         self.roll = roll_radians 
-        #connection type for user-defined elements 
-        #self.connection_i
-        #self.connection_j
 
         # Loads and reactions
         self.loads = []
@@ -37,6 +37,17 @@ class Element:
 
         # Helper properties
         self.dofs_to_vector_index = local_dof_map(self)
+
+        # Error handling
+        if self.material is None:
+            raise ModelDefinitionError(
+                f"Element {self.id} has no material assigned."
+            )
+        
+        if self.section is None:
+            raise ModelDefinitionError(
+                f"Element {self.id} has no section assigned."
+            )
 
     @property
     def numberOfDOFs(self):
@@ -50,7 +61,12 @@ class Element:
         dx = self.j.x - self.i.x
         dy = self.j.y - self.i.y
         dz = self.j.z - self.i.z
-        return sqrt(dx*dx + dy*dy + dz*dz)
+        L = sqrt(dx*dx + dy*dy + dz*dz)
+        if L <= 0.0:
+            raise ElementError(
+                f"Element {self.id} has zero or negative length."
+            )
+        return L
     
     def local_axes(self):
         L = self.length()
@@ -98,9 +114,8 @@ class Element:
     #endregion
 
     # ---------------------------------------------
-    # TRANSFORMATION AND LOCAL STIFFNESS MATRICES
+    # TRANSFORMATION AND STIFFNESS MATRICES
     # ---------------------------------------------
-    #region
     @abstractmethod
     def transformation_matrix(self):
         pass
@@ -108,16 +123,10 @@ class Element:
     @abstractmethod
     def local_stiffness(self):
         pass
-    #endregion
     
-    # --------------------------------
-    # GLOBAL STIFFNESS MATRIX
-    # --------------------------------
-    #region
+    @abstractmethod
     def global_stiffness(self):
-        T = self.transformation_matrix()
-        k_local = self.local_stiffness()
-        return T.T @ k_local @ T
+        pass
 
     def get_dof_indices(self):
         dofs = []
@@ -125,21 +134,7 @@ class Element:
             for idx in self.NODE_DOF_INDICES:
                 dofs.append(node.dofs[idx]) # only add DOFs that the element asks for
         return dofs 
-    #endregion 
 
-    # --------------------------------
-    # FIXED-END FORCES
-    # --------------------------------
-    #region
-    def add_load(self, load):
-        self.loads.append(load)
-
-    def compute_fef(self):
-        self.fef_local[:] = 0.0 
-        for load in self.loads:
-            self.fef_local += load.fef_local(self) # this is the correct sign for reaction 
-    #endregion
-    
     # --------------------------------
     # LOCAL END FORCE ACCESSORS
     # -------------------------------- 
@@ -293,24 +288,26 @@ class Element:
     # --------------------------------
     # QUERYING API
     # --------------------------------
-    def get_end_forces(self, node_label:str, local:bool):
-        endForceDict = {}
-        DOFs_PER_NODE = len(self.NODE_DOF_INDICES)
+    def END_FORCES(self, node_label:str, local:bool):
+        if local:
+            forcesPerNode = self.LOCAL_FORCES_PER_NODE
+            endForces = self.end_forces_local
+        else:
+            forcesPerNode = self.GLOBAL_FORCES_PER_NODE
+            endForces = self.end_forces_global
         
+        endForceDict = {}
+        n = len(forcesPerNode)
+
         if node_label == "i":
             i = 0
         elif node_label == "j":
-            i = DOFs_PER_NODE
+            i = n
         else:
-            raise "Invalid Node Type: Select \"i\" or \"j\""
-
-        if local:
-            for force in self.FORCES_PER_NODE:
-                endForceDict[force] = float(self.end_forces_local[i])
-                i+=1
-        else:
-            for force in self.FORCES_PER_NODE:
-                endForceDict[force] = float(self.end_forces_global[i])
-                i+=1
+            raise ValueError("Invalid node type: select \"i\" or \"j\"")
+        
+        for force in forcesPerNode:
+            endForceDict[force] = endForces[i]
+            i+=1
+        
         return endForceDict
-
