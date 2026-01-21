@@ -41,8 +41,8 @@ class ElementLoad(ABC):
     def torsion(self, x, element):
         return 0.0
     
-class UDL(ElementLoad):
-    def __init__(self, local:bool, wx=0.0, wy=0.0, wz=0.0):     
+class UniformlyDistributedLoad(ElementLoad):
+    def __init__(self, local, wx=0.0, wy=0.0, wz=0.0):     
         self.wx = 0.0
         self.wy = 0.0
         self.wz = 0.0
@@ -131,7 +131,8 @@ class UDL(ElementLoad):
         return 0.5 * self.wz * x**2
         
 class SelfWeight(ElementLoad):
-    def __init__(self):
+    def __init__(self, loadFactor):
+        self.loadFactor = loadFactor
         self.wx = 0.0
         self.wy = 0.0
         self.wz = 0.0
@@ -144,7 +145,7 @@ class SelfWeight(ElementLoad):
 
         gravity_vector = np.array([0.0, -1.0, 0.0])
         x_local, y_local, z_local = element.local_axes()
-        selfWeight = element.material.gamma * element.section.area
+        selfWeight = element.material.gamma * element.section.area * self.loadFactor
 
         # Decompose self weight to local x,y,z
         self.wx = selfWeight * np.dot(gravity_vector, x_local)
@@ -197,7 +198,7 @@ class SelfWeight(ElementLoad):
         return self.wx * x
      
 class PointLoad(ElementLoad):
-    def __init__(self, NODE_i_DISTANCE, local:bool, px = 0.0, py = 0.0, pz = 0.0):
+    def __init__(self, NODE_i_DISTANCE, local, px=0.0, py=0.0, pz=0.0):
         self.px = 0.0
         self.py = 0.0
         self.pz = 0.0

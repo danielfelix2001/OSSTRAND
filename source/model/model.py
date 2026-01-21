@@ -17,6 +17,8 @@ class Model:
         self.F_full = None  
         self.D_full = None 
         self.reactions = None 
+
+        self._preprocessed = False
     
     # Objects
     def add_node(self, node):
@@ -63,23 +65,27 @@ class Model:
             if hasattr(element, "A") and element.A <= 0:
                 raise ElementError(f"Element {element.id}: invalid A.")
 
-    def collect_node_dofs(self):
-        for element in self.element.values():
-            for node in (element.i, element.j):
-                for dof in element.NODE_DOF_INDICES:
-                    if dof not in node.dofs:
-                        # element dictates what DOFs are available for the node
-                        node.dofs[dof] = None   
-                        node.restraints.setdefault(dof, False)
-
     def assign_dofs(self):
         self.free_dofs = []
         self.restrained_dofs = []
 
         dof_counter = 0
         for node in self.node.values():
-            for dof_name in node.dofs:
-                # Assign model-level DOF index 
+            node.dofs = {}
+
+        # DOF declaration 
+        # Elements dictate what DOFs are available for the node
+        for element in self.element.values():
+            for node in (element.i, element.j):
+                for dof in element.NODE_DOF_INDICES:
+                    if dof not in node.dofs:
+                        node.dofs[dof] = None   # make local dof key with None value
+                        node.restraints.setdefault(dof, False)
+        
+        # Numbering Phase
+        for node in self.node.values():                   
+            for dof_name in sorted(node.dofs.keys()):
+                # Assign model-level DOF value to key dof_name
                 node.dofs[dof_name] = dof_counter   
 
                 # DOF is either restrained or free
@@ -103,49 +109,7 @@ class Model:
                 for j in range(nd):
                     if dofs[i] is not None and dofs[j] is not None:
                         self.K_full[dofs[i], dofs[j]] += K[i, j]
-
-    def assemble_loads(self):
-        self.F_full = np.zeros(self.ndof)
-
-        for node in self.node.values():  
-            for dof_name, global_dof in node.dofs.items():
-                if global_dof is None:
-                    continue
-                self.F_full[global_dof] += node.loads.get(dof_name, 0.0)
-        
-        # Check for DOF consistency
-        for node in self.node.values():
-            for dof in node.loads:
-                if dof not in node.dofs:
-                    raise DOFError(
-                        f"Node {node.id}: load applied to undefined DOF {dof}"
-                    )
-        
-        # Load application
-        for node in self.node.values():
-            for dof, load in node.loads.items():
-                if load != 0.0 and node.restraints.get(dof, False):
-                    print(
-                        f"Warning: load applied at restrained DOF "
-                        f"(Node {node.id}, DOF {dof})"
-                    )
-
-    def assemble_fixed_end_forces(self):
-        for element in self.element.values():
-            if element.fef_local is None: # skip if truss
-                continue
-
-            element.compute_fef()
-            
-            T = element.transformation_matrix()
-            fef_global = T.T @ element.fef_local
-
-            dofs = element.get_dof_indices()
-            for i, global_dof in enumerate(dofs):
-                if global_dof is not None:
-                    # subtract because FEFs are reactions
-                    self.F_full[global_dof] -= fef_global[i]
-
+    
     def check_stability(self, tol=1e-8):
         # Extract free–free stiffness matrix
         free = self.free_dofs
@@ -190,6 +154,65 @@ class Model:
             #             msg += f"  Node {node_id} -> {DOF_NAMES[dof_name]} (amplitude {amp:.3f})\n"
             
             raise StabilityError(msg)
+        
+    def apply_load_combo(self, loadCombo):
+        # reset all nodes and elements for each load combo
+        for node in self.node.values():
+            node.reset() 
+        for element in self.element.values():
+            element.reset()
+
+        for loadCase, loadFactor in loadCombo.loadCaseAndFactors.items():
+            if not loadCombo.loadCaseAndFactors:
+                raise ValueError("Load combination must have at least one load case and factor.")
+
+            # apply load factors
+            for nodalLoad in loadCase.nodalLoads:
+                nodalLoad.apply(loadFactor)        
+            for elementLoad in loadCase.elementLoads:
+                elementLoad.apply(loadFactor)
+
+    def assemble_loads(self):
+        self.F_full = np.zeros(self.ndof)
+
+        for node in self.node.values():  
+            for dof_name, global_dof in node.dofs.items():
+                if global_dof is None:
+                    continue
+                self.F_full[global_dof] += node.loads.get(dof_name, 0.0)
+        
+        # Check for DOF consistency
+        for node in self.node.values():
+            for dof in node.loads:
+                if dof not in node.dofs:
+                    raise DOFError(
+                        f"Node {node.id}: load applied to undefined DOF {dof}"
+                    )
+        
+        # Load application
+        for node in self.node.values():
+            for dof, load in node.loads.items():
+                if load != 0.0 and node.restraints.get(dof, False):
+                    print(
+                        f"Warning: load applied at restrained DOF "
+                        f"(Node {node.id}, DOF {dof})"
+                    )
+
+    def assemble_fixed_end_forces(self):
+        for element in self.element.values():
+            if element.fef_local is None: # skip if truss
+                continue
+
+            element.compute_fef()
+            
+            T = element.transformation_matrix()
+            fef_global = T.T @ element.fef_local
+
+            dofs = element.get_dof_indices()
+            for i, global_dof in enumerate(dofs):
+                if global_dof is not None:
+                    # subtract because FEFs are reactions
+                    self.F_full[global_dof] -= fef_global[i]
     
     def solve_matrix_equation(self):
         free = self.free_dofs
@@ -240,19 +263,28 @@ class Model:
 
             element.end_forces_local[:] = f_local
             element.end_forces_global[:] = T.T @ f_local
-
-
-    def solve(self):
+      
+    def preprocess(self):
+        """
+        Checks validity of model, assigns DOFs, 
+        assembles stiffness matrices, and checks model stability.
+        """
         self.validate_model()
-        self.collect_node_dofs()
         self.assign_dofs()
 
         self.assemble_stiffness()
-        self.assemble_loads()
-        self.assemble_fixed_end_forces()
 
         self.check_stability()
+        self._preprocessed = True
 
+    def solve_load_combo(self, loadCombo):
+        if not self._preprocessed:
+            raise RuntimeError(
+                "Model.preprocess() was not called before solve_load_combo()"
+            )
+        self.apply_load_combo(loadCombo)
+        self.assemble_loads()
+        self.assemble_fixed_end_forces()
         self.solve_matrix_equation()
         self.store_displacements()
         self.store_reactions()

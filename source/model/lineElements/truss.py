@@ -8,11 +8,16 @@ class Truss(Element):
     LOCAL_DOFS_PER_NODE = ["ux", "uy", "uz"]
     LOCAL_FORCES_PER_NODE = ["Nx"]
     
-    GLOBAL_FORCES_PER_NODE = ["NX", "VY", "VZ"]    
+    GLOBAL_FORCES_PER_NODE = ["FX", "FY", "FZ"]    
 
     def __init__(self, element_id, node_i, node_j, material, section):    
         super().__init__(element_id, node_i, node_j, material, section)
         self.fef_local = None
+        self.end_forces_local  = np.zeros(6)
+        self.end_forces_global = np.zeros(6)
+
+    def reset(self):
+        self.loads = []
         self.end_forces_local  = np.zeros(6)
         self.end_forces_global = np.zeros(6)
 

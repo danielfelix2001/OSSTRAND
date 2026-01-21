@@ -22,7 +22,7 @@ class Material:
         return (f"Material(id={self.id}, E={self.E}, "
                 f"nu={self.nu}, gamma={self.gamma})")
     
-class SteelMaterial(Material):
+class Material(Material):
     def __init__(self, material_id: str,
                  E: float = 0.0,
                  G: float | None = None,

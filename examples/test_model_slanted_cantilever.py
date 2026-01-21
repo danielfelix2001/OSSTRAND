@@ -1,19 +1,24 @@
 from source.model.nodes import Node
 from source.model.lineElements.frame import Frame
-from source.model.fixedEndForces.fefs import UDL
+from source.model.loads.loadCombo import LoadCombination, LoadCase, NodalLoad, UDL
 from source.model.materials import Material
 from source.model.sections import Section
 from source.model.model import Model
 from source.model.functions import DOF_NAMES, GLOBAL_REACTION_NAMES, LOCAL_REACTION_NAMES, LOCAL_ELEMENT_REACTION_NAMES
-import numpy as np
 
 PI = 3.14159265
-# Force DOFs
-NX, VY, VZ = 0, 1, 2
-TX, MY, MZ = 3, 4, 5
-FORCE_DOFS = [NX, VY, VZ, TX, MY, MZ]
 
-# Displacement DOFs
+# Global Force DOFs
+FX, FY, FZ = 0, 1, 2
+MX, MY, MZ = 3, 4, 5
+GLOBAL_FORCE_DOFS = [FX, FY, FZ, MX, MY, MZ]
+
+# Local Force DOFs
+Nx, Vy, Vz  = 0, 1, 2
+Tx, My, Mz = 3, 4, 5
+LOCAL_FORCE_DOFS = [Nx, Vy, Vz, Tx, My, Mz]
+
+# Global Displacement DOFs
 UX, UY, UZ = 0, 1, 2
 RX, RY, RZ = 3, 4, 5
 DISP_DOFS = [UX, UY, UZ, RX, RY, RZ]
@@ -30,7 +35,7 @@ N1 = Node(1,    0.0,    0.0,    0.0)
 N2 = Node(2, 5000.0, 4000.0, 3000.0)
 
 # Fixed Restraints
-for dof in [UX, UY, UZ, RX, RY, RZ]:
+for dof in DISP_DOFS:
     N1.restrain(dof)
 
 # --------------------------------
@@ -58,19 +63,31 @@ E1 = Frame(
     node_i=N1,
     node_j=N2,
     material=A36_STEEL,
-    section=FRAME_SECTION
+    section=FRAME_SECTION,
+    roll_radians = 0.0
 )
 
 # --------------------------------
-# LOADS
+# LOADS AND LOAD COMBINATIONS
 # --------------------------------
-E1.add_load(
-    UDL(
-        local=False,
-        wx = 5.0,
-        wy = 6.0,
-        wz = 7.0
-    )
+UDL_Wxyz = UDL(
+    element = E1, 
+    local = True,
+    wx = 5.0,
+    wy = 6.0,
+    wz = 7.0
+)
+
+DEAD_LOAD = LoadCase(
+    name = "Dead_Load"
+)
+DEAD_LOAD.add_element_load(UDL_Wxyz)
+
+LC1 = LoadCombination(
+    name = "LC1",
+    loadCaseAndFactors = {
+        DEAD_LOAD: 1.0
+    }
 )
 
 # --------------------------------
@@ -80,7 +97,10 @@ SLANT_CANTILEVER = Model()
 SLANT_CANTILEVER.add_node(N1)
 SLANT_CANTILEVER.add_node(N2)
 SLANT_CANTILEVER.add_element(E1)
-SLANT_CANTILEVER.solve()
+
+# Solve
+SLANT_CANTILEVER.preprocess()
+SLANT_CANTILEVER.solve_load_combo(LC1)
 
 # --------------------------------
 # RESULTS

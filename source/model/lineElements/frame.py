@@ -8,7 +8,7 @@ class Frame(Element):
     LOCAL_DOFS_PER_NODE = ["ux", "uy", "uz", "rx", "ry", "rz"]
     LOCAL_FORCES_PER_NODE = ["Nx", "Vy", "Vz", "Tx", "My", "Mz"]
 
-    GLOBAL_FORCES_PER_NODE = ["NX", "VY", "VZ", "TX", "MY", "MZ"]   
+    GLOBAL_FORCES_PER_NODE = ["FX", "FY", "FZ", "MX", "MY", "MZ"]   
      
     def __init__(self, element_id, node_i, node_j, material, section, roll_radians = 0.0):    
         super().__init__(element_id, node_i, node_j, material, section, roll_radians)
@@ -20,6 +20,12 @@ class Frame(Element):
             "i": set(),
             "j": set()
         }
+        
+    def reset(self):
+        self.loads = []
+        self.fef_local = np.zeros(12)
+        self.end_forces_local  = np.zeros(12)
+        self.end_forces_global = np.zeros(12)
 
     def transformation_matrix(self): #12x12
         R = self.rotation_matrix()

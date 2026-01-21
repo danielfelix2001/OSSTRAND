@@ -14,7 +14,7 @@ class Section:
     def __repr__(self):
         return f"Section(id={self.id}, area={self.area}, Ixx={self.Ixx}, Iyy={self.Iyy}, J={self.J})"
     
-class WSection(Section):
+class Section(Section):
     def __init__(self, section_id: str, 
                  area: float,
                  Ixx: float = 0.0, Iyy: float = 0.0, J: float = 0.0,                 

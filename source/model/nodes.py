@@ -19,6 +19,11 @@ class Node:
 
     def add_load(self, dof_name: int, value: float):
         self.loads[dof_name] = self.loads.get(dof_name, 0.0) + value
+    
+    def reset(self):
+        self.loads = {}
+        self.displacements = {}
+        self.reactions = {}
 
     # --------------------------------
     # QUERYING API
