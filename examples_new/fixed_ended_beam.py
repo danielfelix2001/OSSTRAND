@@ -31,7 +31,7 @@ units in N, mm
 # --------------------------------
 N1 = Node("N1",     0.0,     0.0,     0.0)
 N2 = Node("N2",  5000.0,     0.0,     0.0)
-N3 = Node("N3",  5000.0, -3000.0,     0.0)
+N3 = Node("N3", 10000.0,     0.0,     0.0)
 
 for dof in gv.GLOBAL_DISP_DOFS:
     N1.restrain(dof)
@@ -123,4 +123,5 @@ print("\nNode 2 Displacements:")
 for idx in range(6):
     print(f"{names.DOF[idx]}: {solution.node_displacement(N2.id, idx):.4}")
 
-
+print("\nElement 1 Internal Shear_y:")
+print(f"{names.LOCAL_REACTION_FRAME[gv.uy]}: {solution.internal_force_shear_y(E1.id, 2500.0):.4}")

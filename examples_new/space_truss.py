@@ -1,15 +1,19 @@
-from src.model.geometry.node import Node
-from src.model.elements.truss import Truss
-from src.model.materials.base_material import Material
-from src.model.sections.base_section import Section
-from src.model.model import Model
+from src.core.geometry.node import Node
+from src.core.elements.truss import Truss
+from src.core.materials.base_material import Material
+from src.core.sections.base_section import Section
+from src.core.model import Model
 
-from src.model.loads.load_combo import LoadCombination
-from src.model.loads.load_case import LoadCase
-from src.model.loads.nodal_load import NodalLoad
-from src.model.loads.element_load import UDL, SlfWgt, PntLd
+from src.core.loads.load_combo import LoadCombination
+from src.core.loads.load_case import LoadCase
+from src.core.loads.nodal_load import NodalLoad
+from src.core.loads.element_load import UDL, SelfWeight, PointLoad
 
-from src.utils.helpers import DOF_NAMES, GLOBAL_REACTION_NAMES, LOCAL_REACTION_NAMES, LOCAL_ELEMENT_REACTION_NAMES
+from src.core.analysis.preprocessing import Preprocess
+from src.core.analysis.linear_static import LinearStaticSolve
+from src.core.results.solution_state import SolutionState
+
+from src.utils import helpers as names 
 from src.utils import global_variables as gv
 import math
 
@@ -25,11 +29,11 @@ units in N, mm
 # --------------------------------
 # NODES AND RESTRAINTS
 # --------------------------------
-N1 = Node(1,     0.0,     0.0,     0.0)
-N2 = Node(2, -2000.0, -8000.0,  4000.0)
-N3 = Node(3,  6000.0, -8000.0,  4000.0)
-N4 = Node(4,  6000.0, -8000.0, -2000.0)
-N5 = Node(5, -2000.0, -8000.0, -2000.0)
+N1 = Node("N1",     0.0,     0.0,     0.0)
+N2 = Node("N2", -2000.0, -8000.0,  4000.0)
+N3 = Node("N3",  6000.0, -8000.0,  4000.0)
+N4 = Node("N4",  6000.0, -8000.0, -2000.0)
+N5 = Node("N5", -2000.0, -8000.0, -2000.0)
 
 TRUSS_DOFS = (gv.UX, gv.UY, gv.UZ)
 for N in (N2, N3, N4, N5):
@@ -97,16 +101,19 @@ TRUSS_4 = Truss(
 # LOADS AND LOAD COMBINATIONS
 # --------------------------------
 N1_FX = NodalLoad(
+    id = "N1_FX",
     node = N1,
     dof = gv.FX,
     magnitude = 200000.0
 )
 N1_FY = NodalLoad(
+    id = "N1_FY",
     node = N1,
     dof = gv.FY,
     magnitude = -800000.0
 )
 N1_FZ = NodalLoad(
+    id = "N1_FZ",
     node = N1,
     dof = gv.FZ,
     magnitude = -600000.0
@@ -137,28 +144,25 @@ for truss in (TRUSS_1, TRUSS_2, TRUSS_3, TRUSS_4):
     MODEL_SPACE_TRUSS.add_element(truss)
 
 # Solve
-MODEL_SPACE_TRUSS.preprocess()
-MODEL_SPACE_TRUSS.linear_static_solve(LC1)
+Preprocess(MODEL_SPACE_TRUSS)
+solution = LinearStaticSolve(MODEL_SPACE_TRUSS, LC1)
 
 # --------------------------------
 # RESULTS
 # --------------------------------
-print("\nNode 1 Displacements:")
-for dof, val in N1.displacements.items():
-    print(f"{DOF_NAMES[dof]} = {val:.4e}")
+print("\nNode 2 Displacements:")
+for disp in gv.GLOBAL_DISP_DOFS_TRUSS:
+    print(f"{names.DOF[disp]}: {solution.node_displacement(N1.id, disp):.3e}")
 
 print("\nNode 2 Reactions:")
-for reactions, val in N2.reactions.items():
-    print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
-
+for reaction in gv.GLOBAL_FORCES_TRUSS:
+    print(f"{names.DOF[reaction]}: {solution.node_reaction(N2.id, reaction):.3e}")
 print("\nNode 3 Reactions:")
-for reactions, val in N3.reactions.items():
-    print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
-
+for reaction in gv.GLOBAL_FORCES_TRUSS:
+    print(f"{names.DOF[reaction]}: {solution.node_reaction(N3.id, reaction):.3e}")
 print("\nNode 4 Reactions:")
-for reactions, val in N4.reactions.items():
-    print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
-
+for reaction in gv.GLOBAL_FORCES_TRUSS:
+    print(f"{names.DOF[reaction]}: {solution.node_reaction(N4.id, reaction):.3e}")
 print("\nNode 5 Reactions:")
-for reactions, val in N5.reactions.items():
-    print(f"{GLOBAL_REACTION_NAMES[reactions]} = {val:.4e}")
+for reaction in gv.GLOBAL_FORCES_TRUSS:
+    print(f"{names.DOF[reaction]}: {solution.node_reaction(N5.id, reaction):.3e}")

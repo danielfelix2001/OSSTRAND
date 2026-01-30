@@ -1,15 +1,19 @@
-from src.model.geometry.node import Node
-from src.model.elements.frame import Frame
-from src.model.materials.base_material import Material
-from src.model.sections.base_section import Section
-from src.model.model import Model
+from src.core.geometry.node import Node
+from src.core.elements.frame import Frame
+from src.core.materials.base_material import Material
+from src.core.sections.base_section import Section
+from src.core.model import Model
 
-from src.model.loads.load_combo import LoadCombination
-from src.model.loads.load_case import LoadCase
-from src.model.loads.nodal_load import NodalLoad
-from src.model.loads.element_load import UDL, SlfWgt, PntLd
+from src.core.loads.load_combo import LoadCombination
+from src.core.loads.load_case import LoadCase
+from src.core.loads.nodal_load import NodalLoad
+from src.core.loads.element_load import UDL, SelfWeight, PointLoad
 
-from src.utils.helpers import DOF_NAMES, GLOBAL_REACTION_NAMES, LOCAL_REACTION_NAMES, LOCAL_ELEMENT_REACTION_NAMES
+from src.core.analysis.preprocessing import Preprocess
+from src.core.analysis.linear_static import LinearStaticSolve
+from src.core.results.solution_state import SolutionState
+
+from src.utils import helpers as names 
 from src.utils import global_variables as gv
 import math
 
@@ -25,10 +29,10 @@ units in kip, inch
 # --------------------------------
 # NODES AND RESTRAINTS
 # --------------------------------
-NODE_1 = Node(1,    0.0,    0.0,    0.0)
-NODE_2 = Node(2, -240.0,    0.0,    0.0)
-NODE_3 = Node(3,    0.0, -240.0,    0.0)
-NODE_4 = Node(4,    0.0,    0.0, -240.0)
+NODE_1 = Node("NODE_1",    0.0,    0.0,    0.0)
+NODE_2 = Node("NODE_2", -240.0,    0.0,    0.0)
+NODE_3 = Node("NODE_3",    0.0, -240.0,    0.0)
+NODE_4 = Node("NODE_4",    0.0,    0.0, -240.0)
 
 for n in (NODE_2, NODE_3, NODE_4):
     for dof in gv.GLOBAL_DISP_DOFS:
@@ -82,16 +86,19 @@ ELEMENT_3 = Frame(
 # LOADS AND LOAD COMBINATIONS
 # --------------------------------
 N1_MX = NodalLoad( # Tx, -150 kip-ft
+    id = "N1_MX",
     node = NODE_1,
     dof = gv.MX,
     magnitude = -1800.0
 )
 N1_MZ = NodalLoad( # Mz, 150 kip-ft
+    id = "N1_MZ",
     node = NODE_1,
     dof = gv.MZ,
     magnitude = 1800.0
 )
 E1_localUDL_Y = UDL( # qy, 3 kip/ft
+    id = "E1_localUDL_Y",
     element = ELEMENT_1,
     local = True, 
     wx = 0.0, 
@@ -114,6 +121,12 @@ LIVE_LOAD.add_nodal_load(N1_MX)
 LIVE_LOAD.add_nodal_load(N1_MZ)
 LIVE_LOAD.add_element_load(E1_localUDL_Y)
 
+LC0 = LoadCombination(
+    name = "LC0",
+    loadCaseAndFactors = {
+        DEAD_LOAD: 1.0
+    }
+)
 LC1 = LoadCombination(
     name = "LC1",
     loadCaseAndFactors = {
@@ -127,7 +140,7 @@ LC2 = LoadCombination(
         LIVE_LOAD: 1.6
     }
 )
-LCs = [LC1, LC2]
+LCs = [LC0, LC1, LC2]
 
 # --------------------------------
 # MODEL ASSEMBLY
@@ -138,14 +151,13 @@ for node in (NODE_1, NODE_2, NODE_3, NODE_4):
 for element in (ELEMENT_1, ELEMENT_2, ELEMENT_3):
     MODEL_SPACE_FRAME.add_element(element)
 
-MODEL_SPACE_FRAME.preprocess()
+Preprocess(MODEL_SPACE_FRAME)
 
 # --------------------------------
 # RESULTS
 # --------------------------------
-for LC in LCs:
-    print(f"\nNode 1 Displacements for {LC.name}:")
-    MODEL_SPACE_FRAME.linear_static_solve(LC)
+solution = LinearStaticSolve(MODEL_SPACE_FRAME, LC0)
+print(f"\nNode 1 Displacements for {LC0.name}:")
 
-    for disp in gv.GLOBAL_DISP_DOFS:
-        print(f"{DOF_NAMES[disp]}: {NODE_1.DISPLACEMENT(disp):.3e}")
+for disp in gv.GLOBAL_DISP_DOFS:
+    print(f"{names.DOF[disp]}: {solution.node_displacement(NODE_1.id, disp):.3e}")

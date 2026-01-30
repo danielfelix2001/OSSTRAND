@@ -1,5 +1,3 @@
-# src/model/materials/base_material.py
-
 class Material:
     def __init__(self, material_id: str, 
                  E: float = 0.0, 

@@ -1,16 +1,20 @@
-from src.model.geometry.node import Node
-from src.model.elements.frame import Frame
-from src.model.elements.truss import Truss
-from src.model.materials.base_material import Material
-from src.model.sections.base_section import Section
-from src.model.model import Model
+from src.core.geometry.node import Node
+from src.core.elements.frame import Frame
+from src.core.elements.truss import Truss
+from src.core.materials.base_material import Material
+from src.core.sections.base_section import Section
+from src.core.model import Model
 
-from src.model.loads.load_combo import LoadCombination
-from src.model.loads.load_case import LoadCase
-from src.model.loads.nodal_load import NodalLoad
-from src.model.loads.element_load import UDL, SlfWgt, PntLd
+from src.core.loads.load_combo import LoadCombination
+from src.core.loads.load_case import LoadCase
+from src.core.loads.nodal_load import NodalLoad
+from src.core.loads.element_load import UDL, SelfWeight, PointLoad
 
-from src.utils.helpers import DOF_NAMES, GLOBAL_REACTION_NAMES, LOCAL_REACTION_NAMES, LOCAL_ELEMENT_REACTION_NAMES
+from src.core.analysis.preprocessing import Preprocess
+from src.core.analysis.linear_static import LinearStaticSolve
+from src.core.results.solution_state import SolutionState
+
+from src.utils import helpers as names 
 from src.utils import global_variables as gv
 import math
 
@@ -27,16 +31,16 @@ units in N, mm
 # NODES AND RESTRAINTS
 # --------------------------------
 # Portal Frame 1
-N1 = Node(1,    0.0,    0.0,     0.0)
-N2 = Node(2, 5000.0,    0.0,     0.0)
-N3 = Node(3,    0.0, 3000.0,     0.0)
-N4 = Node(4, 5000.0, 3000.0,     0.0)
+N1 = Node("N1",    0.0,    0.0,     0.0)
+N2 = Node("N2", 5000.0,    0.0,     0.0)
+N3 = Node("N3",    0.0, 3000.0,     0.0)
+N4 = Node("N4", 5000.0, 3000.0,     0.0)
 
 # Portal Frame 2
-N5 = Node(5,    0.0,    0.0, -4000.0)
-N6 = Node(6, 5000.0,    0.0, -4000.0)
-N7 = Node(7,    0.0, 3000.0, -4000.0)
-N8 = Node(8, 5000.0, 3000.0, -4000.0)
+N5 = Node("N5",    0.0,    0.0, -4000.0)
+N6 = Node("N6", 5000.0,    0.0, -4000.0)
+N7 = Node("N7",    0.0, 3000.0, -4000.0)
+N8 = Node("N8", 5000.0, 3000.0, -4000.0)
 
 # Pin restraints
 for node in [N1, N2, N5, N6]:
@@ -55,7 +59,7 @@ A36_STEEL = Material(
     nu = 0.3,
     # gamma = 7850 * 9.81 * 10**(-9) # N/mm^3
 )
-PORTAL_FRAME_SECTION = Section(
+FRAME_SECTION = Section(
     section_id = "W200x15", 
     area = 1910,    # mm^2
     Ixx = 12.8e+06, # mm^4
@@ -71,14 +75,14 @@ TRUSS_SECTION = Section(
 # ELEMENTS
 # --------------------------------
 # Portal Frame 1
-E1 = Frame("E1", N1, N3, A36_STEEL, PORTAL_FRAME_SECTION)
-E2 = Frame("E2", N3, N4, A36_STEEL, PORTAL_FRAME_SECTION)
-E3 = Frame("E3", N4, N2, A36_STEEL, PORTAL_FRAME_SECTION)
+E1 = Frame("E1", N1, N3, A36_STEEL, FRAME_SECTION)
+E2 = Frame("E2", N3, N4, A36_STEEL, FRAME_SECTION)
+E3 = Frame("E3", N4, N2, A36_STEEL, FRAME_SECTION)
 
-# Portal Frame 1
-E4 = Frame("E4", N5, N7, A36_STEEL, PORTAL_FRAME_SECTION)
-E5 = Frame("E5", N7, N8, A36_STEEL, PORTAL_FRAME_SECTION)
-E6 = Frame("E6", N8, N6, A36_STEEL, PORTAL_FRAME_SECTION)
+# Portal Frame 2
+E4 = Frame("E4", N5, N7, A36_STEEL, FRAME_SECTION)
+E5 = Frame("E5", N7, N8, A36_STEEL, FRAME_SECTION)
+E6 = Frame("E6", N8, N6, A36_STEEL, FRAME_SECTION)
 
 # Trusses
 E7 = Truss("E7", N3, N7, A36_STEEL, TRUSS_SECTION)
@@ -93,11 +97,13 @@ ELEMENTS = [E1, E2, E3, E4, E5, E6, E7, E8, E9, E10]
 # LOADS AND LOAD COMBINATIONS
 # --------------------------------
 N3_UZ = NodalLoad(
+    id = "N3_UZ",
     node = N3,
     dof = gv.UZ,
     magnitude = -5000.0
 )
 N4_UZ = NodalLoad(
+    id = "N4_UZ",
     node = N4,
     dof = gv.UZ,
     magnitude = -5000.0
@@ -127,12 +133,23 @@ for node in NODES:
 for element in ELEMENTS:
     MODEL.add_element(element)
    
-MODEL.preprocess()   
-MODEL.linear_static_solve(LC1)
+Preprocess(MODEL)   
+solution = LinearStaticSolve(MODEL, LC1)
 
 # --------------------------------
 # RESULTS
 # --------------------------------
+# print("\nSolution Displacement Vector")
+# print(f"{solution.displacements}")
+
 print("\nNode 3 Displacements:")
-for dof, val in N3.displacements.items():
-    print(f"{DOF_NAMES[dof]} = {val:.4e}")
+for disp in gv.GLOBAL_DISP_DOFS:
+    print(f"{names.DOF[disp]}: {solution.node_displacement(N3.id, disp):.3e}")
+
+print("\nElement 1 Local-End Forces, Node i:")
+for force in gv.LOCAL_FORCES_FRAME:
+    print(f"{names.LOCAL_REACTION_FRAME[force]}: {solution.local_element_end_force("E1", gv.NODE_i, force):.3e}")
+
+print("\nElement 1 Local-End Forces, Node j:")
+for force in gv.LOCAL_FORCES_FRAME:
+    print(f"{names.LOCAL_REACTION_FRAME[force]}: {solution.local_element_end_force("E1", gv.NODE_j, force):.3e}")

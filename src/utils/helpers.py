@@ -1,24 +1,29 @@
-# src/utils/dof_helper.py
-
-DOF_NAMES = {
+DOF = {
     0: "UX", 1: "UY", 2: "UZ",
     3: "RX", 4: "RY", 5: "RZ"
 }
 
-GLOBAL_REACTION_NAMES = {
+GLOBAL_REACTION = {
     0: "FX", 1: "FY", 2: "FZ",
     3: "MX", 4: "MY", 5: "MZ"
 }
 
-LOCAL_REACTION_NAMES = {
+LOCAL_REACTION_FRAME = {
     0: "Nx", 1: "Vy", 2: "Vz",
     3: "Tx", 4: "My", 5: "Mz"
 }
-
-LOCAL_ELEMENT_REACTION_NAMES = {
-    0: "Nx_i", 1: "Vy_i", 2: "Vz_i", 3: "Tx_i", 4: "My_i", 5: "Mz_i",
-    6: "Nx_j", 7: "Vy_j", 8: "Vz_j", 9: "Tx_j", 10:"My_j", 11:"Mz_j"
+LOCAL_REACTION_BEAM = {
+    1: "Vy", 2: "Vz",
+    4: "My", 5: "Mz"
 }
+LOCAL_REACTION_TRUSS = {
+    0: "Nx", 1: "Vy", 2: "Vz"
+}
+
+# LOCAL_ELEMENT_REACTION = {
+#     0: "Nx_i", 1: "Vy_i", 2: "Vz_i", 3: "Tx_i", 4: "My_i", 5: "Mz_i",
+#     6: "Nx_j", 7: "Vy_j", 8: "Vz_j", 9: "Tx_j", 10:"My_j", 11:"Mz_j"
+# }
 
 def local_dof_map(element):
     """

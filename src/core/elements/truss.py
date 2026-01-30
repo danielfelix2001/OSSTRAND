@@ -1,25 +1,20 @@
-# src/model/elements/truss.py
-
-from src.model.geometry.base_element import Element
+from src.core.geometry.base_element import Element
+from src.utils import global_variables as gv
 import numpy as np
 
 class Truss(Element):
     NODE_DOF_INDICES = [0, 1, 2]
-    LOCAL_DOFS_PER_NODE = ["ux", "uy", "uz"]
+    LOCAL_DOFs_PER_NODE = ["ux", "uy", "uz"]
     LOCAL_FORCES_PER_NODE = ["Nx"]
     
-    GLOBAL_FORCES_PER_NODE = ["FX", "FY", "FZ"]    
+    GLOBAL_FORCES_PER_NODE = ["FX", "FY", "FZ"]
+    ALL_DOFs = [ 
+        (gv.NODE_i, gv.ux), (gv.NODE_i, gv.uy), (gv.NODE_i, gv.uz), 
+        (gv.NODE_j, gv.ux), (gv.NODE_j, gv.uy), (gv.NODE_j, gv.uz)
+    ]       
 
     def __init__(self, element_id, node_i, node_j, material, section):    
         super().__init__(element_id, node_i, node_j, material, section)
-        self.fef_local = None
-        self.end_forces_local  = np.zeros(6)
-        self.end_forces_global = np.zeros(6)
-
-    def reset(self):
-        self.loads = []
-        self.end_forces_local  = np.zeros(6)
-        self.end_forces_global = np.zeros(6)
 
     def transformation_matrix(self):
         x, _, _ = self.local_axes()
@@ -38,6 +33,20 @@ class Truss(Element):
 
         return np.array([[ k, -k],
                          [-k,  k]])
+    
+    def release(self, node:int, dof:int):
+        raise NotImplementedError("Truss elements do not support DOF releases")
+    
+    def kept_and_released_indices(self) -> list:
+        kept = self.ALL_DOFs
+        released = []
+        return kept, released
+    
+    def condensed_stiffness(self):
+        return self.local_stiffness()
+    
+    def full_condensed_stiffness(self):
+        return self.local_stiffness()
     
     def global_stiffness(self):
         T = self.transformation_matrix()

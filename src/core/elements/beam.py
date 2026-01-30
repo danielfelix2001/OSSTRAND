@@ -1,36 +1,30 @@
-# src/model/elements/beam.py
-
-from src.model.elements.frame import Frame
+from src.core.elements.frame import Frame
+from src.utils import global_variables as gv
 import numpy as np
 
 class Beam(Frame):
     NODE_DOF_INDICES = [1, 2, 4, 5]
-    LOCAL_DOFS_PER_NODE = ["uy", "uz", "ry", "rz"]
+    LOCAL_DOFs_PER_NODE = ["uy", "uz", "ry", "rz"]
     LOCAL_FORCES_PER_NODE = ["Vy", "Vz", "My", "Mz"]  
       
-    GLOBAL_FORCES_PER_NODE = ["FY", "FZ", "MY", "MZ"]    
+    GLOBAL_FORCES_PER_NODE = ["FY", "FZ", "MY", "MZ"]  
+    ALL_DOFs = [ 
+        (gv.NODE_i, gv.uy), (gv.NODE_i, gv.uz), 
+        (gv.NODE_i, gv.ry), (gv.NODE_i, gv.rz),
+        (gv.NODE_j, gv.uy), (gv.NODE_j, gv.uz),
+        (gv.NODE_j, gv.ry), (gv.NODE_j, gv.rz)
+    ]   
     
     def __init__(self, element_id, node_i, node_j, material, section, roll_radians = 0.0):    
         super().__init__(element_id, node_i, node_j, material, section, roll_radians)
-        self.fef_local = np.zeros(8) # fefs in local coordinates
-        self.end_forces_local  = np.zeros(8)
-        self.end_forces_global = np.zeros(8)
-
-    def reset(self):
-        self.loads = []
-        self.fef_local = np.zeros(8)
-        self.end_forces_local  = np.zeros(8)
-        self.end_forces_global = np.zeros(8)
+        self.releases = set()
 
     def transformation_matrix(self): #8x8
         R = self.rotation_matrix()
         T = np.zeros((8, 8))
 
-        # Node i
-        T[0:2, 0:2] = R[1:3, 1:3]   # uy, uz
-        T[2:4, 2:4] = R[1:3, 1:3]   # ry, rz
-
-        # Node j
+        T[0:2, 0:2] = R[1:3, 1:3]   # extracted y-z rotation block from frame element
+        T[2:4, 2:4] = R[1:3, 1:3]   
         T[4:6, 4:6] = R[1:3, 1:3]
         T[6:8, 6:8] = R[1:3, 1:3]
 
@@ -44,3 +38,4 @@ class Beam(Frame):
         k = np.delete(k, remove, axis=0)
         k = np.delete(k, remove, axis=1)
         return k
+    

@@ -1,9 +1,7 @@
-# src/model/geometry/element.py
-
 import numpy as np
 from math import sqrt
 from abc import abstractmethod
-from src.model.geometry.node import Node
+from src.core.geometry.node import Node
 from src.utils.exceptions import ElementError, ModelDefinitionError
 from src.utils.helpers import local_dof_map
 
@@ -13,10 +11,11 @@ NODE_i, NODE_j = 0, 1
 
 class Element:
     NODE_DOF_INDICES = []
-    LOCAL_DOFS_PER_NODE = [] # Element declares DOFs    
+    LOCAL_DOFs_PER_NODE = [] # Element declares DOFs    
     LOCAL_FORCES_PER_NODE = []    
 
     GLOBAL_FORCES_PER_NODE = []    
+    ALL_DOFs = []
     
     def __init__(self, element_id: str, 
                  node_i: Node, node_j: Node, 
@@ -29,14 +28,8 @@ class Element:
         self.section = section
         self.roll = roll_radians 
 
-        # Loads and reactions
-        self.loads = []
-        self.fef_local = None
-        self.end_forces_local  = None
-        self.end_forces_global = None
-
         # Helper properties
-        self.dofs_to_vector_index = local_dof_map(self)
+        self.dofs_to_vctr_idx = local_dof_map(self)
 
         # Error handling
         if self.material is None:
@@ -128,61 +121,21 @@ class Element:
     def global_stiffness(self):
         pass
 
-    def get_dof_indices(self):
+    def get_gdof_indices(self):
+        """
+        Returns the model-level DOF indices of the element.
+        """
         dofs = []
         for node in (self.i, self.j):
             for idx in self.NODE_DOF_INDICES:
                 dofs.append(node.dofs[idx]) # only add DOFs that the element asks for
         return dofs 
-
-    # --------------------------------
-    # LOCAL END FORCE ACCESSORS
-    # -------------------------------- 
-    #region
-    # AXIAL 
-    @property
-    def Nx_i(self) -> float:
-        return self.end_forces_local[self.dofs_to_vector_index[(NODE_i, ux)]]
-    @property
-    def Nx_j(self) -> float:
-        return self.end_forces_local[self.dofs_to_vector_index[(NODE_j, ux)]]
-
-    # SHEAR
-    @property
-    def Vy_i(self) -> float:
-        return self.end_forces_local[self.dofs_to_vector_index[(NODE_i, uy)]]
-    @property
-    def Vz_i(self) -> float:
-        return self.end_forces_local[self.dofs_to_vector_index[(NODE_i, uz)]]
-    @property
-    def Vy_j(self) -> float:
-        return self.end_forces_local[self.dofs_to_vector_index[(NODE_j, uy)]]
-    @property
-    def Vz_j(self) -> float:
-        return self.end_forces_local[self.dofs_to_vector_index[(NODE_j, uz)]]
-
-    # BENDING
-    @property
-    def My_i(self) -> float:
-        return self.end_forces_local[self.dofs_to_vector_index[(NODE_i, ry)]]
-    @property
-    def Mz_i(self) -> float:
-        return self.end_forces_local[self.dofs_to_vector_index[(NODE_i, rz)]]
-    @property
-    def My_j(self) -> float:
-        return self.end_forces_local[self.dofs_to_vector_index[(NODE_j, ry)]]
-    @property
-    def Mz_j(self) -> float:
-        return self.end_forces_local[self.dofs_to_vector_index[(NODE_j, rz)]]
-
-    # TORSION
-    @property
-    def Tx_i(self) -> float:
-        return self.end_forces_local[self.dofs_to_vector_index[(NODE_i, rx)]]
-    @property
-    def Tx_j(self) -> float:
-        return self.end_forces_local[self.dofs_to_vector_index[(NODE_j, rx)]]
-    #endregion
+    
+    """
+    DEPRECATED: The methods below is no longer being actively used.
+    Functions and classes defined will be relocated to other files.
+    Do not add new code.
+    """
     
     # --------------------------------
     # INTERNAL FORCE ACCESSORS

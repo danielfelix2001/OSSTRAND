@@ -1,5 +1,3 @@
-# src/model/loads/load_combo.py
-
 class LoadCombination:
     """
     factors: dict {load_case_name: factor}

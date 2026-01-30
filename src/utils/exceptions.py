@@ -1,5 +1,3 @@
-# src/utils/exceptions.py
-
 class MSAError(Exception):
     """Base class for all MSA-related errors."""
     pass

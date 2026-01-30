@@ -1,9 +1,6 @@
-# src/model/analysis/preprocessing.py
-
-from src.model.model import Model
-import numpy as np
+from src.core.model import Model
 from src.utils.exceptions import ModelDefinitionError, StabilityError, ElementError
-
+import numpy as np
 
 def validate_model(model:Model):
     # check if nodes, elements exist 
@@ -66,13 +63,12 @@ def assemble_stiffness(model:Model):
 
     for element in model.element.values():
         K = element.global_stiffness()
-        dofs = element.get_dof_indices() # available DOFs from the element 
-        nd = len(dofs)
+        global_dofs = element.get_gdof_indices() # available DOFs from the element 
         
-        for i in range(nd):     # i and j are the global stiffness indices (row, col)
-            for j in range(nd):
-                if dofs[i] is not None and dofs[j] is not None:
-                    model.K_full[dofs[i], dofs[j]] += K[i, j]
+        for i in range(len(global_dofs)):     
+            for j in range(len(global_dofs)):
+                if global_dofs[i] is not None and global_dofs[j] is not None:
+                    model.K_full[global_dofs[i], global_dofs[j]] += K[i, j]
 
 def check_stability(model:Model):
     tol=1e-8
@@ -120,9 +116,16 @@ def check_stability(model:Model):
         
         raise StabilityError(msg)
 
-def preprocess(model:Model):
+def Preprocess(model:Model):
+    """
+    Preprocess the model for analysis:
+    - Validate model definition
+    - Assign DOFs
+    - Assemble global stiffness matrix
+    - Check structural stability
+    """
     validate_model(model)
     assign_dofs(model)
     assemble_stiffness(model)
     check_stability(model)
-    model._preprocessed = True
+    model.preprocessed = True

@@ -1,7 +1,5 @@
-# src/model/loads/load_case.py
-
-from src.model.loads.nodal_load import NodalLoad
-from src.model.loads.element_load import ElementLoad
+from src.core.loads.nodal_load import NodalLoad
+from src.core.loads.element_load import ElementLoad
 
 class LoadCase:
     def __init__(self, name: str):
