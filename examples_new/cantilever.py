@@ -12,6 +12,7 @@ from src.core.loads.element_load import UDL, SelfWeight, PointLoad
 from src.core.analysis.preprocessing import Preprocess
 from src.core.analysis.linear_static import LinearStaticSolve
 from src.core.results.solution_state import SolutionState
+from src.visualization.viewer import ModelViewer
 
 from src.utils import helpers as names 
 from src.utils import global_variables as gv
@@ -102,11 +103,16 @@ solution = LinearStaticSolve(MODEL_1, LC1)
 # --------------------------------
 # RESULTS
 # --------------------------------
-print("Node 1 Reactions:")
-for idx in range(6):
-    print(f"{names.GLOBAL_REACTION[idx]}: {solution.node_reaction(N1.id, idx):.4}")
+# print("Node 1 Reactions:")
+# for idx in range(6):
+#     print(f"{names.GLOBAL_REACTION[idx]}: {solution.node_reaction(N1.id, idx):.4}")
 
-print("\nNode 2 Displacements:")
-for idx in range(6):
-    print(f"{names.DOF[idx]}: {solution.node_displacement(N2.id, idx):.4}")
+# print("\nNode 2 Displacements:")
+# for idx in range(6):
+#     print(f"{names.DOF[idx]}: {solution.node_displacement(N2.id, idx):.4}")
 
+# --------------------------------
+# SHOW
+# --------------------------------
+viewer = ModelViewer(MODEL_1)
+viewer.show()

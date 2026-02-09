@@ -13,6 +13,7 @@ from src.core.loads.element_load import UDL, SelfWeight, PointLoad
 from src.core.analysis.preprocessing import Preprocess
 from src.core.analysis.linear_static import LinearStaticSolve
 from src.core.results.solution_state import SolutionState
+from src.visualization.viewer import ModelViewer
 
 from src.utils import helpers as names 
 from src.utils import global_variables as gv
@@ -142,14 +143,20 @@ solution = LinearStaticSolve(MODEL, LC1)
 # print("\nSolution Displacement Vector")
 # print(f"{solution.displacements}")
 
-print("\nNode 3 Displacements:")
-for disp in gv.GLOBAL_DISP_DOFS:
-    print(f"{names.DOF[disp]}: {solution.node_displacement(N3.id, disp):.3e}")
+# print("\nNode 3 Displacements:")
+# for disp in gv.GLOBAL_DISP_DOFS:
+#     print(f"{names.DOF[disp]}: {solution.node_displacement(N3.id, disp):.3e}")
 
-print("\nElement 1 Local-End Forces, Node i:")
-for force in gv.LOCAL_FORCES_FRAME:
-    print(f"{names.LOCAL_REACTION_FRAME[force]}: {solution.local_element_end_force("E1", gv.NODE_i, force):.3e}")
+# print("\nElement 1 Local-End Forces, Node i:")
+# for force in gv.LOCAL_FORCES_FRAME:
+#     print(f"{names.LOCAL_REACTION_FRAME[force]}: {solution.local_element_end_force("E1", gv.NODE_i, force):.3e}")
 
-print("\nElement 1 Local-End Forces, Node j:")
-for force in gv.LOCAL_FORCES_FRAME:
-    print(f"{names.LOCAL_REACTION_FRAME[force]}: {solution.local_element_end_force("E1", gv.NODE_j, force):.3e}")
+# print("\nElement 1 Local-End Forces, Node j:")
+# for force in gv.LOCAL_FORCES_FRAME:
+#     print(f"{names.LOCAL_REACTION_FRAME[force]}: {solution.local_element_end_force("E1", gv.NODE_j, force):.3e}")
+
+# --------------------------------
+# SHOW
+# --------------------------------
+viewer = ModelViewer(MODEL)
+viewer.show()

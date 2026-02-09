@@ -12,6 +12,7 @@ from src.core.loads.element_load import UDL, SelfWeight, PointLoad
 from src.core.analysis.preprocessing import Preprocess
 from src.core.analysis.linear_static import LinearStaticSolve
 from src.core.results.solution_state import SolutionState
+from src.visualization.viewer import ModelViewer
 
 from src.utils import helpers as names 
 from src.utils import global_variables as gv
@@ -156,8 +157,14 @@ Preprocess(MODEL_SPACE_FRAME)
 # --------------------------------
 # RESULTS
 # --------------------------------
-solution = LinearStaticSolve(MODEL_SPACE_FRAME, LC0)
-print(f"\nNode 1 Displacements for {LC0.name}:")
+# solution = LinearStaticSolve(MODEL_SPACE_FRAME, LC0)
+# print(f"\nNode 1 Displacements for {LC0.name}:")
 
-for disp in gv.GLOBAL_DISP_DOFS:
-    print(f"{names.DOF[disp]}: {solution.node_displacement(NODE_1.id, disp):.3e}")
+# for disp in gv.GLOBAL_DISP_DOFS:
+#     print(f"{names.DOF[disp]}: {solution.node_displacement(NODE_1.id, disp):.3e}")
+
+# --------------------------------
+# SHOW
+# --------------------------------
+viewer = ModelViewer(MODEL_SPACE_FRAME)
+viewer.show()

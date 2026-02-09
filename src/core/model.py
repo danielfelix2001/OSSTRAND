@@ -2,10 +2,10 @@ from src.utils.exceptions import ModelDefinitionError
 
 class Model:
     def __init__(self):
-        self.node = {}
-        self.element = {}
-        self.material = {}
-        self.section = {}
+        self.node = {}      # {node_id: Node}
+        self.element = {}   # {element_id: Element}
+        # self.material = {}
+        # self.section = {}
 
         self.ndof = 0  
         self.restrained_dofs = []

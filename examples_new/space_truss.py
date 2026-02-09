@@ -12,6 +12,7 @@ from src.core.loads.element_load import UDL, SelfWeight, PointLoad
 from src.core.analysis.preprocessing import Preprocess
 from src.core.analysis.linear_static import LinearStaticSolve
 from src.core.results.solution_state import SolutionState
+from src.visualization.viewer import ModelViewer
 
 from src.utils import helpers as names 
 from src.utils import global_variables as gv
@@ -150,19 +151,25 @@ solution = LinearStaticSolve(MODEL_SPACE_TRUSS, LC1)
 # --------------------------------
 # RESULTS
 # --------------------------------
-print("\nNode 2 Displacements:")
-for disp in gv.GLOBAL_DISP_DOFS_TRUSS:
-    print(f"{names.DOF[disp]}: {solution.node_displacement(N1.id, disp):.3e}")
+# print("\nNode 2 Displacements:")
+# for disp in gv.GLOBAL_DISP_DOFS_TRUSS:
+#     print(f"{names.DOF[disp]}: {solution.node_displacement(N1.id, disp):.3e}")
 
-print("\nNode 2 Reactions:")
-for reaction in gv.GLOBAL_FORCES_TRUSS:
-    print(f"{names.DOF[reaction]}: {solution.node_reaction(N2.id, reaction):.3e}")
-print("\nNode 3 Reactions:")
-for reaction in gv.GLOBAL_FORCES_TRUSS:
-    print(f"{names.DOF[reaction]}: {solution.node_reaction(N3.id, reaction):.3e}")
-print("\nNode 4 Reactions:")
-for reaction in gv.GLOBAL_FORCES_TRUSS:
-    print(f"{names.DOF[reaction]}: {solution.node_reaction(N4.id, reaction):.3e}")
-print("\nNode 5 Reactions:")
-for reaction in gv.GLOBAL_FORCES_TRUSS:
-    print(f"{names.DOF[reaction]}: {solution.node_reaction(N5.id, reaction):.3e}")
+# print("\nNode 2 Reactions:")
+# for reaction in gv.GLOBAL_FORCES_TRUSS:
+#     print(f"{names.DOF[reaction]}: {solution.node_reaction(N2.id, reaction):.3e}")
+# print("\nNode 3 Reactions:")
+# for reaction in gv.GLOBAL_FORCES_TRUSS:
+#     print(f"{names.DOF[reaction]}: {solution.node_reaction(N3.id, reaction):.3e}")
+# print("\nNode 4 Reactions:")
+# for reaction in gv.GLOBAL_FORCES_TRUSS:
+#     print(f"{names.DOF[reaction]}: {solution.node_reaction(N4.id, reaction):.3e}")
+# print("\nNode 5 Reactions:")
+# for reaction in gv.GLOBAL_FORCES_TRUSS:
+#     print(f"{names.DOF[reaction]}: {solution.node_reaction(N5.id, reaction):.3e}")
+
+# --------------------------------
+# SHOW
+# --------------------------------
+viewer = ModelViewer(MODEL_SPACE_TRUSS)
+viewer.show()

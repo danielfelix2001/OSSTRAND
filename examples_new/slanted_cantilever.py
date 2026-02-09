@@ -12,6 +12,7 @@ from src.core.loads.element_load import UDL, SelfWeight, PointLoad
 from src.core.analysis.preprocessing import Preprocess
 from src.core.analysis.linear_static import LinearStaticSolve
 from src.core.results.solution_state import SolutionState
+from src.visualization.viewer import ModelViewer
 
 from src.utils import helpers as names 
 from src.utils import global_variables as gv
@@ -103,7 +104,13 @@ solution = LinearStaticSolve(MODEL, LC1)
 # --------------------------------
 # RESULTS
 # --------------------------------
-print("\nFree end displacements:")
-for disp in gv.GLOBAL_DISP_DOFS:
-    print(f"{names.DOF[disp]}: {solution.node_displacement(N2.id, disp):.3e}")
+# print("\nFree end displacements:")
+# for disp in gv.GLOBAL_DISP_DOFS:
+#     print(f"{names.DOF[disp]}: {solution.node_displacement(N2.id, disp):.3e}")
+
+# --------------------------------
+# SHOW
+# --------------------------------
+viewer = ModelViewer(MODEL)
+viewer.show()
 

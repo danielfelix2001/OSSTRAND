@@ -135,59 +135,7 @@ class Element:
     DEPRECATED: The methods below is no longer being actively used.
     Functions and classes defined will be relocated to other files.
     Do not add new code.
-    """
-    
-    # --------------------------------
-    # INTERNAL FORCE ACCESSORS
-    # --------------------------------
-    #region
-    # AXIAL
-    def Nx_internal(self, x) -> float:
-        Nx_NODE_i = self.Nx_i
-        Nx_LOAD = 0.0
-        for elementLoad in self.loads:
-            Nx_LOAD += elementLoad.axial(x, self)
-        return -(Nx_NODE_i + Nx_LOAD)    
-    
-    # SHEAR
-    def Vy_internal(self, x) -> float:
-        Vy_NODE_i = self.Vy_i
-        Vy_LOAD = 0.0
-        for elementLoad in self.loads:
-            Vy_LOAD += elementLoad.shear_y(x, self)
-        return Vy_NODE_i + Vy_LOAD 
-
-    def Vz_internal(self, x) -> float:
-        Vz_NODE_i = self.Vz_i
-        Vz_LOAD = 0.0
-        for elementLoad in self.loads:
-            Vz_LOAD += elementLoad.shear_z(x, self)
-        return Vz_NODE_i + Vz_LOAD 
-
-    # BENDING    
-    def My_internal(self, x) -> float:
-        My_NODE_i = self.My_i + self.Vz_i * x
-        My_LOAD = 0.0
-        for elementLoad in self.loads:
-            My_LOAD += elementLoad.moment_y(x, self)
-        return My_NODE_i + My_LOAD 
-
-    def Mz_internal(self, x) -> float:
-        Mz_NODE_i = self.Mz_i - self.Vy_i * x
-        Mz_LOAD = 0.0
-        for elementLoad in self.loads:
-            Mz_LOAD += elementLoad.moment_z(x, self)
-        return -(Mz_NODE_i + Mz_LOAD) 
-
-    # TORSION
-    def Tx_internal(self, x) -> float:
-        Tx_NODE_i = self.Tx_i
-        Tx_LOAD = 0.0
-        for elementLoad in self.loads:
-            Tx_LOAD += elementLoad.torsion(x, self)
-        return -(Tx_NODE_i + Tx_LOAD)
-    #endregion
-    
+    """    
     # --------------------------------
     # INTERNAL STRESS ACCESSORS
     # --------------------------------
@@ -238,29 +186,3 @@ class Element:
     # TORSIONAL SHEAR STRESS Tr/J
     #endregion
 
-    # --------------------------------
-    # QUERYING API
-    # --------------------------------
-    def END_FORCES(self, node_label:str, local:bool):
-        if local:
-            forcesPerNode = self.LOCAL_FORCES_PER_NODE
-            endForces = self.end_forces_local
-        else:
-            forcesPerNode = self.GLOBAL_FORCES_PER_NODE
-            endForces = self.end_forces_global
-        
-        endForceDict = {}
-        n = len(forcesPerNode)
-
-        if node_label == "i":
-            i = 0
-        elif node_label == "j":
-            i = n
-        else:
-            raise ValueError("Invalid node type: select \"i\" or \"j\"")
-        
-        for force in forcesPerNode:
-            endForceDict[force] = endForces[i]
-            i+=1
-        
-        return endForceDict
