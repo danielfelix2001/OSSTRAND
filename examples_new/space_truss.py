@@ -12,7 +12,7 @@ from src.core.loads.element_load import UDL, SelfWeight, PointLoad
 from src.core.analysis.preprocessing import Preprocess
 from src.core.analysis.linear_static import LinearStaticSolve
 from src.core.results.solution_state import SolutionState
-from src.visualization.viewer import ModelViewer
+from src.visualization.viewer import SolutionStateViewer
 
 from src.utils import helpers as names 
 from src.utils import global_variables as gv
@@ -171,5 +171,5 @@ solution = LinearStaticSolve(MODEL_SPACE_TRUSS, LC1)
 # --------------------------------
 # SHOW
 # --------------------------------
-viewer = ModelViewer(MODEL_SPACE_TRUSS)
+viewer = SolutionStateViewer(MODEL_SPACE_TRUSS)
 viewer.show()

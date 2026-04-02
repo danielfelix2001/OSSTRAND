@@ -5,7 +5,7 @@ class Node:
         self.x, self.y, self.z = x, y, z
 
         self.dofs = {}          # {Local-level DOF index : Model-level DOF index} 
-        self.restraints = {}    
+        self.restraints = {}    # {Local-level DOF index : True or False} 
 
     def restrain(self, dof_name):
-        self.restraints[dof_name] = True
+        self.restraints[dof_name] = True 

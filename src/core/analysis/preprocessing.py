@@ -92,6 +92,7 @@ def check_stability(model:Model):
             zero_rows.append(free[i])
 
     if zero_rows:
+        msg = ""
         for dof in zero_rows:
             node_id, dof_name = dof_map[dof]
             msg += f"  Node {node_id}, DOF {dof_name}\n"

@@ -96,5 +96,5 @@ class SolutionState:
         Mz_LOAD = 0.0
         factored_load_list = self.element_loads[element_id]
         for load in factored_load_list:
-            My_LOAD += load.moment_z(dist_from_NODE_i)
+            Mz_LOAD += load.moment_z(dist_from_NODE_i)
         return Mz_NODE_i + Mz_LOAD

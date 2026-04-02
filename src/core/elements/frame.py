@@ -88,10 +88,9 @@ class Frame(Element):
         self.releases.add((node, local_dof))
 
     def kept_and_released_indices(self) -> list:
-        """
-        Returns:
-        kept     : list[tuple]  # element-local DOFs kept in the system
-        released : list[tuple]  # element-local DOFs released
+        """ 
+        kept     : list[tuple]  element-local DOFs kept in the system
+        released : list[tuple]  element-local DOFs released
         """
         released = sorted(self.releases)
         kept = [dof for dof in self.ALL_DOFs if dof not in released]

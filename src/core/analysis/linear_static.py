@@ -1,7 +1,6 @@
 import numpy as np 
 from src.utils.exceptions import DOFError
 from src.core.model import Model
-from src.core.loads.element_load import ElementLoad
 from src.core.loads.load_combo import LoadCombination
 from src.core.results.solution_state import SolutionState
 from collections import defaultdict
