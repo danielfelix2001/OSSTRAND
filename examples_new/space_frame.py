@@ -153,6 +153,7 @@ for element in (ELEMENT_1, ELEMENT_2, ELEMENT_3):
     MODEL_SPACE_FRAME.add_element(element)
 
 Preprocess(MODEL_SPACE_FRAME)
+solution = LinearStaticSolve(MODEL_SPACE_FRAME, LC2)
 
 # --------------------------------
 # RESULTS
@@ -166,5 +167,5 @@ Preprocess(MODEL_SPACE_FRAME)
 # --------------------------------
 # SHOW
 # --------------------------------
-viewer = SolutionStateViewer(MODEL_SPACE_FRAME)
+viewer = SolutionStateViewer(solution, deformation_scale=1500.0)
 viewer.show()

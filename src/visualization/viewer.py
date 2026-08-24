@@ -16,9 +16,9 @@ class SolutionStateViewer():
     """
     Object used to view models
     """
-    def __init__(self, state:SolutionState, deformation_scale:float=500.0):
+    def __init__(self, state:SolutionState, deformation_scale:float=10.0):
         self.model = state.model
-        self.displacements = state.displacements
+        self.state = state
 
         self.plotter = pv.Plotter()
         self.bounds = None
@@ -49,10 +49,9 @@ class SolutionStateViewer():
         # Deformed Model
         deformed_points_list = []
         for node_id in self.node_ids:
-            node_global_index_dict = self.nodes[node_id].dofs
-            x_disp = self.displacements[node_global_index_dict[gv.UX]]
-            y_disp = self.displacements[node_global_index_dict[gv.UY]]
-            z_disp = self.displacements[node_global_index_dict[gv.UZ]]
+            x_disp = self.state.node_displacement(node_id, gv.UX)
+            y_disp = self.state.node_displacement(node_id, gv.UY)
+            z_disp = self.state.node_displacement(node_id, gv.UZ)
 
             deformed_points_list.append([
                 self.nodes[node_id].x + x_disp*deformation_scale,

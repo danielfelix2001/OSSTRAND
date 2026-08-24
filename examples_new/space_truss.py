@@ -171,5 +171,5 @@ solution = LinearStaticSolve(MODEL_SPACE_TRUSS, LC1)
 # --------------------------------
 # SHOW
 # --------------------------------
-viewer = SolutionStateViewer(MODEL_SPACE_TRUSS)
+viewer = SolutionStateViewer(solution, deformation_scale=200.0)
 viewer.show()
