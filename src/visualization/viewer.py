@@ -12,11 +12,13 @@ DOF_MAP = {
     gv.RZ: ("RZ", np.array([0, 0, 1]), '#a8d9f5', "rotation"),
 }
 
+
+
 class SolutionStateViewer():
     """
     Object used to view models
     """
-    def __init__(self, state:SolutionState, deformation_scale:float=10.0):
+    def __init__(self, state:SolutionState, deformation_scale:float=10.0, rotation_scale:float=5.0):
         self.model = state.model
         self.state = state
 
@@ -47,6 +49,7 @@ class SolutionStateViewer():
         self.lines = np.array(lines_list, dtype=int)
 
         # Deformed Model
+        ## Deformed Points
         deformed_points_list = []
         for node_id in self.node_ids:
             x_disp = self.state.node_displacement(node_id, gv.UX)
@@ -60,12 +63,79 @@ class SolutionStateViewer():
             ])
         self.deformed_points = np.array(deformed_points_list)
 
-        # use interpolation so elements consider rotation
-        deformed_lines_list = []
+        ## Deformed Lines
+        self.deformed_lines = []
         for element in self.elements.values():
-            deformed_lines_list.append([2, self.node_index[element.i.id], self.node_index[element.j.id]])
-        self.deformed_lines = np.array(deformed_lines_list, dtype=int)
 
+            # Node i coordinates and orientation
+            X_i = np.array([
+                self.nodes[element.i.id].x +
+                self.state.node_displacement(element.i.id, gv.UX) * deformation_scale,
+
+                self.nodes[element.i.id].y +
+                self.state.node_displacement(element.i.id, gv.UY) * deformation_scale,
+
+                self.nodes[element.i.id].z +
+                self.state.node_displacement(element.i.id, gv.UZ) * deformation_scale,
+            ])
+            theta_i = np.array([
+                self.state.node_displacement(element.i.id, gv.RX) * rotation_scale,
+                self.state.node_displacement(element.i.id, gv.RY) * rotation_scale,
+                self.state.node_displacement(element.i.id, gv.RZ) * rotation_scale,
+            ])
+
+            # Node j coordinates and orientation
+            X_j = np.array([
+                self.nodes[element.j.id].x +
+                self.state.node_displacement(element.j.id, gv.UX) * deformation_scale,
+
+                self.nodes[element.j.id].y +
+                self.state.node_displacement(element.j.id, gv.UY) * deformation_scale,
+
+                self.nodes[element.j.id].z +
+                self.state.node_displacement(element.j.id, gv.UZ) * deformation_scale,
+            ])
+            theta_j = np.array([
+                self.state.node_displacement(element.j.id, gv.RX) * rotation_scale,
+                self.state.node_displacement(element.j.id, gv.RY) * rotation_scale,
+                self.state.node_displacement(element.j.id, gv.RZ) * rotation_scale,
+            ])
+
+            # Generate base deformed centerline function
+            def centerline(t):
+                h1 = 2*t**3 - 3*t**2 + 1
+                h2 = t**3 - 2*t**2 + t
+                h3 = -2*t**3 + 3*t**2
+                h4 = t**3 - t**2
+                return (
+                    h1 * X_i +
+                    h2 * T_i +
+                    h3 * X_j +
+                    h4 * T_j
+                )
+            def get_centerline_tangent(element, theta):
+                L = element.length()
+                ex, ey, ez = element.local_axes()
+
+                return L * (ex + np.cross(theta, ex))
+            
+            T_i = get_centerline_tangent(element, theta_i)
+            T_j = get_centerline_tangent(element, theta_j)    
+
+            # Superimpose UDL and point load function
+                # todo later
+
+            # Generate sample points 
+            ts = np.linspace(0, 1, 50)
+            points = np.array([
+                centerline(t)
+                for t in ts
+            ])
+
+            # Draw curve
+            curve = pv.Spline(points)
+            self.deformed_lines.append(curve)
+        
     def _add_node_mesh(self):
         point_mesh = pv.PolyData(self.points)
         self.plotter.add_mesh(
@@ -101,16 +171,16 @@ class SolutionStateViewer():
         )
 
     def _add_deformed_element_mesh(self, deformation_opacity:float=0.7):
-        deformed_line_mesh = pv.PolyData(self.deformed_points, self.deformed_lines)
-        self.plotter.add_mesh(
-            deformed_line_mesh,
-            color="#f0ab59",
-            line_width=6,
-            style="wireframe",
-            name="deformed_elements",
-            opacity=deformation_opacity,
-            lighting=False
-        )
+        # Add spline curves directly
+        for i, curve in enumerate(self.deformed_lines):
+            self.plotter.add_mesh(
+                curve,
+                color="#f0ab59",
+                line_width=6,
+                name=f"deformed_element_{i}",
+                opacity=deformation_opacity,
+                lighting=False
+            )    
 
     def _add_restraints_mesh(self):
         scale = 1.0
@@ -239,3 +309,6 @@ class SolutionStateViewer():
         self.plotter.enable_parallel_projection()
         self.plotter.disable_shadows()
         self.plotter.show()
+        print()
+
+

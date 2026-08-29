@@ -127,5 +127,5 @@ solution = LinearStaticSolve(MODEL, LC1)
 # --------------------------------
 # SHOW
 # --------------------------------
-viewer = SolutionStateViewer(solution, deformation_scale=3000.0)
+viewer = SolutionStateViewer(solution, deformation_scale=3000.0, rotation_scale=100.0)
 viewer.show()
