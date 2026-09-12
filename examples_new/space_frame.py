@@ -158,11 +158,11 @@ solution = LinearStaticSolve(MODEL_SPACE_FRAME, LC2)
 # --------------------------------
 # RESULTS
 # --------------------------------
-# solution = LinearStaticSolve(MODEL_SPACE_FRAME, LC0)
-# print(f"\nNode 1 Displacements for {LC0.name}:")
+solution = LinearStaticSolve(MODEL_SPACE_FRAME, LC0)
+print(f"\nNode 1 Displacements for {LC0.name}:")
 
-# for disp in gv.GLOBAL_DISP_DOFS:
-#     print(f"{names.DOF[disp]}: {solution.node_displacement(NODE_1.id, disp):.3e}")
+for disp in gv.GLOBAL_DISP_DOFS:
+    print(f"{names.DOF[disp]}: {solution.node_displacement(NODE_1.id, disp):.3e}")
 
 # --------------------------------
 # SHOW

@@ -120,9 +120,9 @@ solution = LinearStaticSolve(MODEL, LC1)
 # --------------------------------
 # RESULTS
 # --------------------------------
-# print("\nNode 2 Displacements:")
-# for idx in range(6):
-#     print(f"{names.DOF[idx]}: {solution.node_displacement(N2.id, idx):.4}")
+print("\nNode 2 Displacements:")
+for idx in range(6):
+    print(f"{names.DOF[idx]}: {solution.node_displacement(N2.id, idx):.4}")
 
 # --------------------------------
 # SHOW

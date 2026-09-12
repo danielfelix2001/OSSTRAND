@@ -12,13 +12,11 @@ DOF_MAP = {
     gv.RZ: ("RZ", np.array([0, 0, 1]), '#a8d9f5', "rotation"),
 }
 
-
-
 class SolutionStateViewer():
     """
     Object used to view models
     """
-    def __init__(self, state:SolutionState, deformation_scale:float=10.0, rotation_scale:float=5.0):
+    def __init__(self, state:SolutionState, deformation_scale:float=10.0, rotation_scale:float=1.0):
         self.model = state.model
         self.state = state
 
@@ -79,10 +77,11 @@ class SolutionStateViewer():
                 self.state.node_displacement(element.i.id, gv.UZ) * deformation_scale,
             ])
             theta_i = np.array([
-                self.state.node_displacement(element.i.id, gv.RX) * rotation_scale,
-                self.state.node_displacement(element.i.id, gv.RY) * rotation_scale,
-                self.state.node_displacement(element.i.id, gv.RZ) * rotation_scale,
+                self.state.node_displacement(element.i.id, gv.RX),
+                self.state.node_displacement(element.i.id, gv.RY),
+                self.state.node_displacement(element.i.id, gv.RZ),
             ])
+            theta_i_display = theta_i * rotation_scale
 
             # Node j coordinates and orientation
             X_j = np.array([
@@ -96,12 +95,22 @@ class SolutionStateViewer():
                 self.state.node_displacement(element.j.id, gv.UZ) * deformation_scale,
             ])
             theta_j = np.array([
-                self.state.node_displacement(element.j.id, gv.RX) * rotation_scale,
-                self.state.node_displacement(element.j.id, gv.RY) * rotation_scale,
-                self.state.node_displacement(element.j.id, gv.RZ) * rotation_scale,
+                self.state.node_displacement(element.j.id, gv.RX),
+                self.state.node_displacement(element.j.id, gv.RY),
+                self.state.node_displacement(element.j.id, gv.RZ),
             ])
+            theta_j_display = theta_j * rotation_scale
 
             # Generate base deformed centerline function
+            def get_centerline_tangent(element, theta):
+                L = element.length()
+                ex, ey, ez = element.local_axes()
+
+                return L * (ex + np.cross(theta, ex))
+            
+            T_i = get_centerline_tangent(element, theta_i_display)
+            T_j = get_centerline_tangent(element, theta_j_display)  
+
             def centerline(t):
                 h1 = 2*t**3 - 3*t**2 + 1
                 h2 = t**3 - 2*t**2 + t
@@ -113,20 +122,26 @@ class SolutionStateViewer():
                     h3 * X_j +
                     h4 * T_j
                 )
-            def get_centerline_tangent(element, theta):
-                L = element.length()
-                ex, ey, ez = element.local_axes()
-
-                return L * (ex + np.cross(theta, ex))
             
-            T_i = get_centerline_tangent(element, theta_i)
-            T_j = get_centerline_tangent(element, theta_j)    
-
             # Superimpose UDL and point load function
-                # todo later
+            # for q, query element loads that are class UDL from state.element_loads[element_id] and extract UDL.applied_load_x_local, UDL.applied_load_y_local, UDL.applied_load_z_local
+            # for EI, query state.model.element.material.E and state.model.element.material.E
+            # viewer needs to know which element is being corrected
+
+            # def udl_correction_x(t, q, L, EI):
+            #     return (
+            #         q * L**4 / (24 * EI)
+            #         * t**2
+            #         * (1 - t)**2
+            #     )
+
+            # def pointload_correction():
+            #     return(
+
+            #     )
 
             # Generate sample points 
-            ts = np.linspace(0, 1, 50)
+            ts = np.linspace(0, 1, 10)
             points = np.array([
                 centerline(t)
                 for t in ts
@@ -177,6 +192,7 @@ class SolutionStateViewer():
                 curve,
                 color="#f0ab59",
                 line_width=6,
+                style="wireframe",
                 name=f"deformed_element_{i}",
                 opacity=deformation_opacity,
                 lighting=False
@@ -250,6 +266,8 @@ class SolutionStateViewer():
     # Releases
 
     # Point Loads
+    # def _add_point_loads_mesh(self):
+    #     ()
 
     # Element Loads
 

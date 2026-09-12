@@ -95,19 +95,19 @@ N2_UY = NodalLoad(
     dof = gv.UY,
     magnitude = -1000.0
 )
-UDL_wy = UDL(
-    id = "UDL_1",
-    element = E1,
-    local = True,
-    wx =  0.0,
-    wy = -1.0,
-    wz =  0.0
-)
+# UDL_wy = UDL(
+#     id = "UDL_1",
+#     element = E1,
+#     local = True,
+#     wx =  0.0,
+#     wy = -1.0,
+#     wz =  0.0
+# )
 DEAD_LOAD = LoadCase(
     name = "Dead_Load"
 )
 DEAD_LOAD.add_nodal_load(N2_UY)
-DEAD_LOAD.add_element_load(UDL_wy)
+# DEAD_LOAD.add_element_load(UDL_wy)
 
 LC1 = LoadCombination(
     name = "LC1",
@@ -120,9 +120,9 @@ solution = LinearStaticSolve(MODEL, LC1)
 # --------------------------------
 # RESULTS
 # --------------------------------
-# print("\nNode 2 Displacements:")
-# for idx in range(6):
-#     print(f"{names.DOF[idx]}: {solution.node_displacement(N2.id, idx):.4}")
+print("\nNode 2 Displacements:")
+for idx in range(6):
+    print(f"{names.DOF[idx]}: {solution.node_displacement(N2.id, idx):.4}")
 
 # print("\nElement 1 Internal Shear_y:")
 # print(f"{names.LOCAL_REACTION_FRAME[gv.uy]}: {solution.internal_force_shear_y(E1.id, 2500.0):.4}")
@@ -130,5 +130,5 @@ solution = LinearStaticSolve(MODEL, LC1)
 # --------------------------------
 # SHOW
 # --------------------------------
-viewer = SolutionStateViewer(solution, deformation_scale=20.0)
+viewer = SolutionStateViewer(solution, deformation_scale=50.0)
 viewer.show()

@@ -151,22 +151,22 @@ solution = LinearStaticSolve(MODEL_SPACE_TRUSS, LC1)
 # --------------------------------
 # RESULTS
 # --------------------------------
-# print("\nNode 2 Displacements:")
-# for disp in gv.GLOBAL_DISP_DOFS_TRUSS:
-#     print(f"{names.DOF[disp]}: {solution.node_displacement(N1.id, disp):.3e}")
+print("\nNode 2 Displacements:")
+for disp in gv.GLOBAL_DISP_DOFS_TRUSS:
+    print(f"{names.DOF[disp]}: {solution.node_displacement(N1.id, disp):.3e}")
 
-# print("\nNode 2 Reactions:")
-# for reaction in gv.GLOBAL_FORCES_TRUSS:
-#     print(f"{names.DOF[reaction]}: {solution.node_reaction(N2.id, reaction):.3e}")
-# print("\nNode 3 Reactions:")
-# for reaction in gv.GLOBAL_FORCES_TRUSS:
-#     print(f"{names.DOF[reaction]}: {solution.node_reaction(N3.id, reaction):.3e}")
-# print("\nNode 4 Reactions:")
-# for reaction in gv.GLOBAL_FORCES_TRUSS:
-#     print(f"{names.DOF[reaction]}: {solution.node_reaction(N4.id, reaction):.3e}")
-# print("\nNode 5 Reactions:")
-# for reaction in gv.GLOBAL_FORCES_TRUSS:
-#     print(f"{names.DOF[reaction]}: {solution.node_reaction(N5.id, reaction):.3e}")
+print("\nNode 2 Reactions:")
+for reaction in gv.GLOBAL_FORCES_TRUSS:
+    print(f"{names.DOF[reaction]}: {solution.node_reaction(N2.id, reaction):.3e}")
+print("\nNode 3 Reactions:")
+for reaction in gv.GLOBAL_FORCES_TRUSS:
+    print(f"{names.DOF[reaction]}: {solution.node_reaction(N3.id, reaction):.3e}")
+print("\nNode 4 Reactions:")
+for reaction in gv.GLOBAL_FORCES_TRUSS:
+    print(f"{names.DOF[reaction]}: {solution.node_reaction(N4.id, reaction):.3e}")
+print("\nNode 5 Reactions:")
+for reaction in gv.GLOBAL_FORCES_TRUSS:
+    print(f"{names.DOF[reaction]}: {solution.node_reaction(N5.id, reaction):.3e}")
 
 # --------------------------------
 # SHOW

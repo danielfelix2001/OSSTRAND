@@ -104,9 +104,9 @@ solution = LinearStaticSolve(MODEL, LC1)
 # --------------------------------
 # RESULTS
 # --------------------------------
-# print("\nFree end displacements:")
-# for disp in gv.GLOBAL_DISP_DOFS:
-#     print(f"{names.DOF[disp]}: {solution.node_displacement(N2.id, disp):.3e}")
+print("\nFree end displacements:")
+for disp in gv.GLOBAL_DISP_DOFS:
+    print(f"{names.DOF[disp]}: {solution.node_displacement(N2.id, disp):.3e}")
 
 # --------------------------------
 # SHOW
